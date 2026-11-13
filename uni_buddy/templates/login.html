@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniBuddy - Log In</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+</head>
+<body>
+    <!-- Pete difuze mov în fundal -->
+    <div class="glow glow-top"></div>
+    <div class="glow glow-bottom-right"></div>
+
+    <!-- Bara de sus: Logo + Dropdown Limbă -->
+    <header class="top-bar">
+        <div class="logo">
+            <div class="logo-icon">✦</div>
+            <span>UniBuddy</span>
+        </div>
+
+        <div class="language-dropdown" id="langDropdown">
+            <button type="button" id="langMenuBtn" class="lang-btn">
+                <span data-i18n="langLabel">LANGUAGE</span>
+                <span class="arrow">▾</span>
+            </button>
+            <ul id="langOptions" class="lang-options hidden">
+                <li><button type="button" class="lang-option active" data-lang="en">ENGLISH</button></li>
+                <li><button type="button" class="lang-option" data-lang="ro">ROMÂNĂ</button></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Formularul central -->
+    <main class="login-container">
+        <!-- SECȚIUNEA 1: LOG IN -->
+        <div id="loginSection" class="auth-box">
+            <h1 class="title" data-i18n="loginTitle">LOG IN</h1>
+
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <label for="loginUsername" data-i18n="username">USERNAME</label>
+                    <input type="text" id="loginUsername" required autocomplete="off">
+                </div>
+
+                <div class="input-group">
+                    <label for="loginPassword" data-i18n="password">PASSWORD</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+
+                <div class="actions">
+                    <a href="#" class="forgot-link" data-i18n="forgot">FORGOT PASSWORD</a>
+                </div>
+
+                <button type="submit" class="submit-btn" data-i18n="submit">ENTER →</button>
+                <p id="loginStatus" class="status-message"></p>
+            </form>
+
+            <p class="switch-prompt">
+                <span data-i18n="noAccount">DONT HAVE AN ACCOUNT?</span> 
+                <a href="#" id="showSignupBtn" class="switch-link" data-i18n="createAccount">CREATE ACCOUNT</a>
+            </p>
+        </div>
+
+        <!-- SECȚIUNEA 2: SIGN UP -->
+        <div id="signupSection" class="auth-box hidden">
+            <h1 class="title" data-i18n="signupTitle">SIGN UP</h1>
+
+            <form id="signupForm" class="login-form">
+                <div class="input-group">
+                    <label for="signupUsername" data-i18n="username">USERNAME</label>
+                    <input type="text" id="signupUsername" required autocomplete="off">
+                </div>
+
+                <div class="input-group">
+                    <label for="signupEmail" data-i18n="email">EMAIL</label>
+                    <input type="email" id="signupEmail" required autocomplete="off">
+                </div>
+
+                <div class="input-group">
+                    <label for="signupPassword" data-i18n="password">PASSWORD</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="signupConfirmPassword" data-i18n="confirmPassword">CONFIRM PASSWORD</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+
+                <button type="submit" class="submit-btn" data-i18n="registerBtn">REGISTER →</button>
+                <p id="signupStatus" class="status-message"></p>
+            </form>
+
+            <p class="switch-prompt">
+                <span data-i18n="haveAccount">ALREADY HAVE AN ACCOUNT?</span> 
+                <a href="#" id="showLoginBtn" class="switch-link" data-i18n="loginLink">LOG IN</a>
+            </p>
+        </div>
+    </main>
+
+    <!-- Buton BUDDY dreapta jos -->
+    <button type="button" id="buddyBtn" class="buddy-btn">✦ BUDDY</button>
+
+    <script src="{{ url_for('static', filename='script1.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --purple: #54218e;
+    --purple-dark: #390d6c;
+    --purple-light: #bc98f5;
+    --purple-pale: #f2eaff;
+    --background: #f7f6fb;
+    --white: #ffffff;
+    --text: #2d2340;
+    --muted: #888298;
+    --border: #e9e5f0;
+    --shadow: 0 5px 20px rgba(65,32,105,.06);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button, input {
+    font: inherit;
+}
+
+/* Petele difuze mov din fundal */
+.glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(95px);
+}
+
+.glow-top {
+    width: 650px;
+    height: 440px;
+    background: radial-gradient(circle, rgba(188, 152, 245, 0.45) 0%, transparent 70%);
+    top: -140px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.glow-bottom-right {
+    width: 550px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(188, 152, 245, 0.42) 0%, transparent 70%);
+    bottom: -140px;
+    right: -90px;
+}
+
+/* Bara de sus */
+.top-bar {
+    position: absolute;
+    top: 28px;
+    left: 40px;
+    right: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 20;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--purple-dark);
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -.7px;
+}
+
+.logo-icon {
+    width: 39px;
+    height: 39px;
+    border-radius: 13px;
+    background: var(--purple-dark);
+    color: white;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+}
+
+/* Dropdown limbă */
+.language-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.lang-btn {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--purple-dark);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow);
+    transition: .2s;
+}
+
+.lang-btn:hover {
+    background: var(--purple-pale);
+}
+
+.lang-btn .arrow {
+    font-size: 11px;
+    transition: transform 0.2s ease;
+}
+
+.lang-btn.open .arrow {
+    transform: rotate(180deg);
+}
+
+.lang-options {
+    position: absolute;
+    top: 115%;
+    right: 0;
+    list-style: none;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 6px;
+    min-width: 130px;
+    box-shadow: 0 12px 35px #280a4629;
+}
+
+.lang-option {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    padding: 9px 12px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.lang-option:hover, .lang-option.active {
+    background: var(--purple-pale);
+    color: var(--purple-dark);
+}
+
+/* Zona centrală */
+.login-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 400px;
+    padding: 0 20px;
+}
+
+.auth-box {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    animation: fadeIn 0.25s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.title {
+    color: var(--purple-dark);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.4px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.login-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--purple-dark);
+    letter-spacing: 0.4px;
+}
+
+.input-group input {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    outline: none;
+    color: var(--text);
+    font-size: 13px;
+    width: 100%;
+    padding: 12px 14px;
+    transition: .2s;
+}
+
+.input-group input:focus {
+    border-color: var(--purple-light);
+    background: var(--white);
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -4px;
+}
+
+.forgot-link {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--purple);
+    text-decoration: none;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.submit-btn {
+    margin-top: 6px;
+    width: 100%;
+    padding: 13px 19px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--purple-dark);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.submit-btn:hover {
+    background: var(--purple);
+}
+
+.status-message {
+    font-size: 12px;
+    margin-top: 4px;
+    min-height: 16px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.switch-prompt {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.switch-link {
+    color: var(--purple-dark);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.switch-link:hover {
+    text-decoration: underline;
+}
+
+/* Buton BUDDY dreapta jos (în stilul butonului AI al colegei) */
+.buddy-btn {
+    position: absolute;
+    bottom: 28px;
+    right: 40px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border: 1px solid #e4d5fb;
+    border-radius: 12px;
+    background: #f3eaff;
+    color: var(--purple-dark);
+    font-weight: 700;
+    font-size: 12px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: .2s;
+}
+
+.buddy-btn:hover {
+    background: var(--purple-dark);
+    color: white;
+}
+
+@media (max-width: 700px) {
+    .top-bar { left: 20px; right: 20px; top: 20px; }
+    .buddy-btn { right: 20px; bottom: 20px; }
+}
