@@ -8,7 +8,6 @@
 </head>
 <body>
     <div class="app">
-        <!-- BARA LATERALĂ (stilul exact din proiectul colegei) -->
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-icon">✦</div>
@@ -16,6 +15,10 @@
             </div>
 
             <nav class="navigation">
+                <a href="/home" class="nav-item" style="text-decoration: none;">
+                    <span class="nav-icon">⌂</span>
+                    <span data-i18n="navHome">Acasă</span>
+                </a>
                 <button class="nav-item active" data-tab="profile">
                     <span class="nav-icon">◈</span>
                     <span data-i18n="navProfile">Profilul meu</span>
@@ -53,11 +56,8 @@
             </div>
         </aside>
 
-        <!-- ZONA PRINCIPALĂ -->
         <div class="main-content">
-            <!-- TOPBAR ALB (ca la colegă) -->
             <header class="topbar">
-
                 <div class="top-actions">
                     <div class="language-dropdown" id="langDropdown">
                         <button type="button" id="langMenuBtn" class="lang-btn">
@@ -74,7 +74,6 @@
                 </div>
             </header>
 
-            <!-- CONȚINUT -->
             <main class="content">
                 <!-- 1. PROFIL (cu Editare și Setări) -->
                 <section id="tab-profile" class="tab-panel active">
@@ -219,7 +218,6 @@
         </div>
     </div>
 
-    <!-- Buton BUDDY dreapta jos -->
     <button type="button" id="buddyBtn" class="ai-toggle buddy-floating">✦ BUDDY</button>
 
     <script src="{{ url_for('static', filename='profile.js') }}"></script>

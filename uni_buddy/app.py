@@ -3,7 +3,6 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 app = Flask(__name__)
 app.secret_key = "uni_buddy_secret_key_change_in_prod"
 
-# Bază de date în memorie (fără date fictive pentru postări, prieteni, mesaje)
 USERS = {
     "student1": {
         "password": "parola123",
@@ -18,22 +17,29 @@ USERS = {
 }
 
 @app.route('/')
-def home():
+def index():
     if 'username' in session and session['username'] in USERS:
-        return redirect(url_for('profile'))
+        return redirect(url_for('home_feed'))
     return render_template('login.html')
+
+@app.route('/home')
+def home_feed():
+    username = session.get('username')
+    if not username or username not in USERS:
+        return redirect(url_for('index'))
+    return render_template('home.html', username=username, user=USERS[username])
 
 @app.route('/profile')
 def profile():
     username = session.get('username')
     if not username or username not in USERS:
-        return redirect(url_for('home'))
+        return redirect(url_for('index'))
     return render_template('profile.html', username=username, user=USERS[username])
 
 @app.route('/logout')
 def logout():
     session.pop('username', None)
-    return redirect(url_for('home'))
+    return redirect(url_for('index'))
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -46,7 +52,7 @@ def login():
 
     if username in USERS and USERS[username]["password"] == password:
         session['username'] = username
-        return jsonify({"success": True, "message": f"Bine ai revenit, {username}!", "redirect": "/profile"})
+        return jsonify({"success": True, "message": f"Bine ai revenit, {username}!", "redirect": "/home"})
     else:
         return jsonify({"success": False, "message": "Username sau parolă incorectă."}), 401
 

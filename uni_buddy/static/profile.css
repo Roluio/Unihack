@@ -26,7 +26,7 @@ button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 .hidden { display: none !important; }
 
-/* MAIN LAYOUT (identic cu al colegei) */
+/* MAIN LAYOUT */
 .app { display: flex; min-height: 100vh; }
 
 .sidebar {
@@ -149,17 +149,11 @@ button { cursor: pointer; }
     height: 95px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 0 40px;
     gap: 20px;
     background: white;
     border-bottom: 1px solid var(--border);
-}
-
-.topbar-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--muted);
 }
 
 .top-actions {
@@ -436,7 +430,7 @@ button { cursor: pointer; }
     cursor: pointer;
 }
 
-/* SEARCH BOX (identic cu al colegei) */
+/* SEARCH BOX */
 .search-box {
     display: flex;
     align-items: center;
@@ -461,7 +455,7 @@ button { cursor: pointer; }
     color: var(--text);
 }
 
-/* BUTON AI BUDDY (identic cu .ai-toggle al colegei) */
+/* BUTON AI BUDDY */
 .ai-toggle.buddy-floating {
     position: fixed;
     bottom: 25px;

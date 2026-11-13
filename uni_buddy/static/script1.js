@@ -21,10 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
             langLabel: "LANGUAGE",
             loginTitle: "LOG IN",
             signupTitle: "SIGN UP",
-            username: "USERNAME:",
-            email: "EMAIL:",
-            password: "PASSWORD:",
-            confirmPassword: "CONFIRM PASSWORD:",
+            username: "USERNAME",
+            email: "EMAIL",
+            password: "PASSWORD",
+            confirmPassword: "CONFIRM PASSWORD",
             forgot: "FORGOT PASSWORD",
             submit: "ENTER →",
             registerBtn: "REGISTER →",
@@ -41,10 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
             langLabel: "LIMBĂ",
             loginTitle: "AUTENTIFICARE",
             signupTitle: "CREARE CONT",
-            username: "UTILIZATOR:",
-            email: "EMAIL:",
-            password: "PAROLĂ:",
-            confirmPassword: "CONFIRMĂ PAROLA:",
+            username: "UTILIZATOR",
+            email: "EMAIL",
+            password: "PAROLĂ",
+            confirmPassword: "CONFIRMĂ PAROLA",
             forgot: "AI UITAT PAROLA?",
             submit: "INTRĂ →",
             registerBtn: "ÎNREGISTRARE →",
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
 
-        loginStatus.style.color = '#3a235b';
+        loginStatus.style.color = '#54218e';
         loginStatus.textContent = translations[currentLang].checking;
 
         try {
@@ -131,17 +131,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                loginStatus.style.color = '#2e7d32';
+                loginStatus.style.color = '#399b70';
                 loginStatus.textContent = result.message;
                 setTimeout(() => {
-                    window.location.href = result.redirect || '/profile';
+                    window.location.href = result.redirect || '/home';
                 }, 600);
             } else {
-                loginStatus.style.color = '#c62828';
+                loginStatus.style.color = '#c34060';
                 loginStatus.textContent = result.message;
             }
         } catch (error) {
-            loginStatus.style.color = '#c62828';
+            loginStatus.style.color = '#c34060';
             loginStatus.textContent = translations[currentLang].connError;
         }
     });
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('signupPassword').value;
         const confirmPassword = document.getElementById('signupConfirmPassword').value;
 
-        signupStatus.style.color = '#3a235b';
+        signupStatus.style.color = '#54218e';
         signupStatus.textContent = translations[currentLang].creating;
 
         try {
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                signupStatus.style.color = '#2e7d32';
+                signupStatus.style.color = '#399b70';
                 signupStatus.textContent = result.message;
 
                 setTimeout(() => {
@@ -174,15 +174,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     signupSection.classList.add('hidden');
                     loginSection.classList.remove('hidden');
                     document.getElementById('loginUsername').value = username;
-                    loginStatus.style.color = '#2e7d32';
+                    loginStatus.style.color = '#399b70';
                     loginStatus.textContent = translations[currentLang].accountCreated;
                 }, 1200);
             } else {
-                signupStatus.style.color = '#c62828';
+                signupStatus.style.color = '#c34060';
                 signupStatus.textContent = result.message;
             }
         } catch (error) {
-            signupStatus.style.color = '#c62828';
+            signupStatus.style.color = '#c34060';
             signupStatus.textContent = translations[currentLang].connError;
         }
     });
