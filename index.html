@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniBuddy | Library</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">
+                <i data-lucide="graduation-cap"></i>
+            </div>
+            <span>UniBuddy</span>
+        </div>
+
+        <div class="new-wrapper">
+            <button class="new-button" id="newButton">
+                <i data-lucide="plus"></i>
+                <span>New</span>
+                <i data-lucide="chevron-down"></i>
+            </button>
+
+            <div class="new-menu hidden" id="newMenu">
+                <button id="createFolder">
+                    <i data-lucide="folder-plus"></i>
+                    New Folder
+                </button>
+                <button id="uploadButton">
+                    <i data-lucide="file-up"></i>
+                    Upload Files
+                </button>
+            </div>
+        </div>
+
+        <nav class="navigation">
+            <button class="nav-item active" data-view="files">
+                <i data-lucide="hard-drive"></i> My Files
+            </button>
+            <button class="nav-item" data-view="favorites">
+                <i data-lucide="star"></i> Favorites
+            </button>
+            <button class="nav-item" data-view="shared">
+                <i data-lucide="users"></i> Shared Files
+            </button>
+            <button class="nav-item" data-view="trash">
+                <i data-lucide="trash-2"></i> Trash
+            </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="storage-card">
+                <i data-lucide="cloud"></i>
+                <div>
+                    <strong>Your UniBuddy Library</strong>
+                    <p>All your notes in one place.</p>
+                </div>
+            </div>
+
+            <div class="profile">
+                <div class="avatar">S</div>
+                <div class="profile-info">
+                    <strong>Student</strong>
+                    <span>My Workspace</span>
+                </div>
+                <i data-lucide="settings"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN PAGE -->
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-box">
+                <i data-lucide="search"></i>
+                <input id="searchInput" type="search"
+                       placeholder="Search your files and folders...">
+            </div>
+
+            <div class="top-actions">
+                <button class="icon-button" title="Notifications">
+                    <i data-lucide="bell"></i>
+                </button>
+                <div class="top-avatar">S</div>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="page-heading">
+                <div class="page-info">
+                    <div class="breadcrumb" id="breadcrumb"></div>
+
+                    <div class="title-row">
+                        <button id="backButton" class="back-button"
+                                title="Go Back">
+                            <i data-lucide="arrow-left"></i>
+                        </button>
+
+                        <div>
+                            <h1 id="pageTitle">My Files</h1>
+                            <p id="pageSubtitle">
+                                All your study materials in one place.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="primary-button" id="topUpload">
+                    <i data-lucide="upload"></i>
+                    <span>Upload File</span>
+                </button>
+
+                <button class="danger-button hidden" id="emptyTrashButton">
+                    <i data-lucide="trash-2"></i>
+                    <span>Empty Trash</span>
+                </button>
+            </div>
+
+            <!-- FOLDERS -->
+            <section class="section" id="foldersSection">
+                <div class="section-heading">
+                    <h2>
+                        <i data-lucide="folder"></i>
+                        Folders
+                    </h2>
+                    <span id="folderCount">0 folders</span>
+                </div>
+                <div class="folders-grid" id="foldersGrid"></div>
+            </section>
+
+            <!-- FILES -->
+            <section class="section">
+                <div class="section-heading">
+                    <h2>
+                        <i data-lucide="files"></i>
+                        Files
+                    </h2>
+
+                    <div class="section-tools">
+                        <span id="fileCount">0 files</span>
+                        <button class="icon-button" id="toggleView"
+                                title="Change view">
+                            <i data-lucide="list"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="files-grid" id="filesGrid"></div>
+            </section>
+
+            <div class="empty-state hidden" id="emptyState">
+                <i data-lucide="folder-open"></i>
+                <h3>Nothing here yet</h3>
+                <p>Create a folder or upload your first file.</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<input type="file" id="fileInput" multiple hidden>
+<div class="context-menu hidden" id="contextMenu"></div>
+
+<!-- CREATE / RENAME MODAL -->
+<div class="modal hidden" id="formModal">
+    <div class="dialog-box">
+        <div class="modal-header">
+            <h3 id="formTitle">New Folder</h3>
+            <button class="icon-button" id="closeForm">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <form id="itemForm">
+            <label for="itemName">Name</label>
+            <input id="itemName" type="text" maxlength="120" required>
+
+            <div class="dialog-actions">
+                <button class="secondary-button" type="button"
+                        id="cancelForm">Cancel</button>
+                <button class="primary-button" type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DOCUMENT PREVIEW + AI -->
+<div class="preview-overlay hidden" id="previewModal">
+    <div class="preview-window">
+
+        <!-- TOP TOOLBAR -->
+        <header class="preview-toolbar">
+            <div class="preview-file-info">
+                <div class="preview-file-icon">
+                    <i data-lucide="file-text"></i>
+                </div>
+                <div class="preview-file-name">
+                    <strong id="previewTitle">Document.pdf</strong>
+                    <span id="previewFileSize">Document Preview</span>
+                </div>
+            </div>
+
+            <div class="preview-toolbar-actions">
+                <button class="ai-toggle" id="toggleAI">
+                    <i data-lucide="sparkles"></i>
+                    <span>Ask UniBuddy AI</span>
+                </button>
+
+                <button class="icon-button" id="previewDownload"
+                        title="Download">
+                    <i data-lucide="download"></i>
+                </button>
+
+                <button class="icon-button" id="closePreview"
+                        title="Close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- SPLIT VIEW -->
+        <div class="preview-layout" id="previewLayout">
+
+            <section class="document-panel">
+                <div class="document-header">
+                    <div class="document-label">
+                        <i data-lucide="eye"></i>
+                        Document Preview
+                    </div>
+                    <span class="document-status">
+                        <i data-lucide="check-circle-2"></i>
+                        Ready
+                    </span>
+                </div>
+
+                <div class="document-content" id="previewContent"></div>
+            </section>
+
+            <!-- AI SIDE PANEL -->
+            <aside class="ai-panel hidden" id="aiPanel">
+
+                <div class="ai-panel-header">
+                    <div class="ai-heading">
+                        <div class="ai-logo">
+                            <i data-lucide="sparkles"></i>
+                        </div>
+                        <div>
+                            <strong>UniBuddy AI</strong>
+                            <span>Your study companion</span>
+                        </div>
+                    </div>
+
+                    <button class="icon-button" id="closeAI"
+                            title="Close AI">
+                        <i data-lucide="panel-right-close"></i>
+                    </button>
+                </div>
+
+                <div class="ai-document-context">
+                    <i data-lucide="file-text"></i>
+                    <div>
+                        <span>Working with document</span>
+                        <strong id="aiDocumentName">Document.pdf</strong>
+                    </div>
+                </div>
+
+                <div class="ai-chat-messages" id="aiMessages">
+
+                    <div class="ai-welcome" id="aiWelcome">
+                        <div class="ai-welcome-icon">
+                            <i data-lucide="brain-circuit"></i>
+                        </div>
+
+                        <h3>Study smarter with UniBuddy</h3>
+                        <p>
+                            Select an action below or ask a question
+                            about this document.
+                        </p>
+
+                        <div class="ai-suggestions">
+                            <button data-ai-action="summary">
+                                <i data-lucide="book-open"></i>
+                                <span>Summarize document</span>
+                                <i data-lucide="arrow-up-right"></i>
+                            </button>
+
+                            <button data-ai-action="quiz">
+                                <i data-lucide="list-checks"></i>
+                                <span>Generate a quiz</span>
+                                <i data-lucide="arrow-up-right"></i>
+                            </button>
+
+                            <button data-ai-action="explain">
+                                <i data-lucide="lightbulb"></i>
+                                <span>Explain simply</span>
+                                <i data-lucide="arrow-up-right"></i>
+                            </button>
+
+                            <button data-ai-action="notes">
+                                <i data-lucide="notebook-pen"></i>
+                                <span>Create study notes</span>
+                                <i data-lucide="arrow-up-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-input-area">
+                    <div class="ai-language-row">
+                        <span>
+                            <i data-lucide="languages"></i>
+                            Response language
+                        </span>
+                        <select id="aiLanguage">
+                            <option value="en">English</option>
+                            <option value="ro">Română</option>
+                        </select>
+                    </div>
+
+                    <form class="ai-input-box" id="aiForm">
+                        <textarea
+                            id="aiInput"
+                            rows="2"
+                            placeholder="Ask anything about this file..."
+                        ></textarea>
+
+                        <div class="ai-input-bottom">
+                            <span>
+                                <i data-lucide="file-check"></i>
+                                File selected
+                            </span>
+                            <button type="submit" id="aiSend"
+                                    title="Send message">
+                                <i data-lucide="arrow-up"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <p class="ai-disclaimer">
+                        AI integration will be enabled when
+                        the backend is connected.
+                    </p>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast">
+    <i data-lucide="check-circle-2"></i>
+    <span id="toastMessage"></span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
