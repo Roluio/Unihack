@@ -1,0 +1,381 @@
+
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>UniBuddy | {{ module_title }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+
+    <style>
+        :root {
+            --purple: #54218e;
+            --dark-purple: #390d6c;
+            --light-purple: #bc98f5;
+            --background: #f7f6fb;
+            --text: #2d2340;
+            --muted: #888298;
+            --border: #e9e5f0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .module-app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* UNIBUDDY NAVIGATION */
+
+        .global-header {
+            flex-shrink: 0;
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 12px 30px;
+            border-bottom: 1px solid var(--border);
+            background: white;
+            box-shadow: 0 2px 12px #32145908;
+            position: relative;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            flex-shrink: 0;
+            color: var(--dark-purple);
+            text-decoration: none;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -.6px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            display: grid;
+            place-items: center;
+            background: var(--dark-purple);
+            color: white;
+        }
+
+        .brand-icon svg {
+            width: 21px;
+            height: 21px;
+        }
+
+        .global-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .global-nav a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 13px;
+            border-radius: 11px;
+            color: var(--purple);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: .2s;
+        }
+
+        .global-nav a:hover {
+            background: #f2eaff;
+        }
+
+        .global-nav a.active {
+            background: #eee3ff;
+            color: var(--dark-purple);
+        }
+
+        .global-nav svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            width: 37px;
+            height: 37px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: var(--dark-purple);
+            color: white;
+            font-weight: 700;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 130px;
+        }
+
+        .user-details strong {
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-details span {
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .logout-button {
+            padding: 10px 13px;
+            border-radius: 10px;
+            background: #ffeded;
+            color: #c34060;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .logout-button:hover {
+            background: #ffd8d8;
+        }
+
+        /* MODULE CONTENT */
+
+        .module-container {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .module-iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: var(--background);
+        }
+
+        @media(max-width:1100px) {
+            .global-header {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .global-nav {
+                order: 3;
+                width: 100%;
+            }
+        }
+
+        @media(max-width:650px) {
+            .global-header {
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .brand {
+                font-size: 17px;
+            }
+
+            .brand-icon {
+                width: 34px;
+                height: 34px;
+            }
+
+            .user-details {
+                display: none;
+            }
+
+            .logout-button {
+                padding: 8px;
+                font-size: 10px;
+            }
+
+            .global-nav {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 3px;
+            }
+
+            .global-nav a {
+                font-size: 11px;
+                padding: 9px;
+            }
+
+            .global-nav a svg {
+                width: 15px;
+                height: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="module-app">
+
+    <!-- GLOBAL NAVIGATION -->
+    <header class="global-header">
+
+        <a href="/home" class="brand">
+            <div class="brand-icon">
+                <i data-lucide="sparkles"></i>
+            </div>
+            <span>UniBuddy</span>
+        </a>
+
+        <nav class="global-nav">
+
+            <a href="/home">
+                <i data-lucide="house"></i>
+                Acasă
+            </a>
+
+            <a href="/profile">
+                <i data-lucide="user-round"></i>
+                Profil
+            </a>
+
+            <a href="/library"
+               class="{% if module_name == 'library' %}active{% endif %}">
+                <i data-lucide="folder-open"></i>
+                Library
+            </a>
+
+            <a href="/messages"
+               class="{% if module_name == 'messages' %}active{% endif %}">
+                <i data-lucide="message-circle"></i>
+                Mesaje
+            </a>
+
+            <a href="/friends">
+                <i data-lucide="users-round"></i>
+                Prieteni
+            </a>
+
+            <a href="/notifications">
+                <i data-lucide="bell"></i>
+                Notificări
+            </a>
+
+            <a href="/search">
+                <i data-lucide="search"></i>
+                Căutare
+            </a>
+
+        </nav>
+
+        <div class="user-area">
+
+            <div class="user-avatar">
+                {{ username[0]|upper }}
+            </div>
+
+            <div class="user-details">
+                <strong>{{ user.full_name }}</strong>
+                <span>@{{ username }}</span>
+            </div>
+
+            <a href="/logout" class="logout-button">
+                Ieșire
+            </a>
+
+        </div>
+
+    </header>
+
+    <!-- LIBRARY OR MESSAGES -->
+    <main class="module-container">
+
+        <iframe
+            id="moduleFrame"
+            class="module-iframe"
+            title="{{ module_title }}"
+            src="{{ url_for('static', filename=module_file) }}">
+        </iframe>
+
+    </main>
+
+</div>
+
+<script>
+    lucide.createIcons();
+
+    const moduleFrame = document.getElementById("moduleFrame");
+
+    moduleFrame.addEventListener("load", () => {
+        try {
+            const documentInside = moduleFrame.contentDocument;
+
+            if (!documentInside) return;
+
+            // Redirect old standalone Library/Chat navigation
+            // to the unified Flask routes.
+            documentInside.addEventListener("click", (event) => {
+                const link = event.target.closest("a[href]");
+
+                if (!link) return;
+
+                const href = link.getAttribute("href");
+
+                if (href === "index.html" ||
+                    href === "../index.html") {
+
+                    event.preventDefault();
+                    window.location.href = "/library";
+                }
+            });
+
+        } catch (error) {
+            console.warn(
+                "Module frame navigation unavailable:",
+                error
+            );
+        }
+    });
+</script>
+
+</body>
+</html>

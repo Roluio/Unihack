@@ -1,0 +1,487 @@
+
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>UniBuddy - Profil</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='profile.css') }}">
+</head>
+
+<body>
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <div class="logo-icon">✦</div>
+            <span>UniBuddy</span>
+        </div>
+
+        <nav class="navigation">
+
+            <a href="/home"
+               class="nav-item"
+               style="text-decoration:none;">
+                <span class="nav-icon">⌂</span>
+                <span data-i18n="navHome">Acasă</span>
+            </a>
+
+            <button class="nav-item active"
+                    data-tab="profile">
+                <span class="nav-icon">◈</span>
+                <span data-i18n="navProfile">Profilul meu</span>
+            </button>
+
+            <a href="/library"
+               class="nav-item"
+               style="text-decoration:none;">
+                <span class="nav-icon">▱</span>
+                <span data-i18n="navPosts">Postările mele</span>
+            </a>
+
+            <a href="/messages"
+               class="nav-item"
+               style="text-decoration:none;">
+                <span class="nav-icon">✉</span>
+                <span data-i18n="navMessages">Mesaje</span>
+            </a>
+
+            <button class="nav-item"
+                    data-tab="notifications">
+                <span class="nav-icon">🔔</span>
+                <span data-i18n="navNotifications">Notificări</span>
+            </button>
+
+            <button class="nav-item"
+                    data-tab="search">
+                <span class="nav-icon">⌕</span>
+                <span data-i18n="navSearch">Căutare</span>
+            </button>
+
+            <button class="nav-item"
+                    data-tab="friends">
+                <span class="nav-icon">☺</span>
+                <span data-i18n="navFriends">Prieteni</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="profile">
+
+                <div class="avatar">
+                    {{ username[0]|upper }}
+                </div>
+
+                <div class="profile-info">
+                    <strong>{{ user.full_name }}</strong>
+                    <span>@{{ username }}</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="main-content">
+
+        <header class="topbar">
+
+            <div class="top-actions">
+
+                <div class="language-dropdown" id="langDropdown">
+
+                    <button type="button"
+                            id="langMenuBtn"
+                            class="lang-btn">
+
+                        <span data-i18n="langLabel">LIMBĂ</span>
+                        <span class="arrow">▾</span>
+                    </button>
+
+                    <ul id="langOptions"
+                        class="lang-options hidden">
+
+                        <li>
+                            <button type="button"
+                                    class="lang-option"
+                                    data-lang="en">
+                                ENGLISH
+                            </button>
+                        </li>
+
+                        <li>
+                            <button type="button"
+                                    class="lang-option active"
+                                    data-lang="ro">
+                                ROMÂNĂ
+                            </button>
+                        </li>
+
+                    </ul>
+                </div>
+
+                <a href="/logout"
+                   class="logout-btn"
+                   data-i18n="logout">
+                    Deconectare
+                </a>
+
+            </div>
+
+        </header>
+
+        <main class="content">
+
+            <!-- ===================== -->
+            <!-- PROFILE -->
+            <!-- ===================== -->
+
+            <section id="tab-profile"
+                     class="tab-panel active">
+
+                <div class="page-heading">
+
+                    <div class="page-info">
+                        <div class="title-row">
+                            <h1 data-i18n="navProfile">
+                                Profilul meu
+                            </h1>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+
+                        <button type="button"
+                                id="toggleEditBtn"
+                                class="primary-button"
+                                data-i18n="editProfile">
+                            Editează profil
+                        </button>
+
+                        <button type="button"
+                                id="toggleSettingsBtn"
+                                class="secondary-button"
+                                data-i18n="settings">
+                            Setări
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- PROFILE CARD -->
+
+                <div class="profile-card">
+
+                    <div class="profile-header">
+
+                        <div class="big-avatar">
+                            {{ username[0]|upper }}
+                        </div>
+
+                        <div class="profile-identity">
+
+                            <h2 id="displayFullName">
+                                {{ user.full_name }}
+                            </h2>
+
+                            <p class="username-tag">
+                                @{{ username }}
+                            </p>
+
+                            <p id="facultyLine"
+                               class="faculty-info"
+                               {% if not user.faculty and not user.year %}
+                               style="display:none;"
+                               {% endif %}>
+
+                                <span id="displayFaculty">
+                                    {{ user.faculty }}
+                                </span>
+
+                                <span id="facultySeparator">
+                                    {% if user.faculty and user.year %}
+                                        •
+                                    {% endif %}
+                                </span>
+
+                                <span id="displayYear">
+                                    {{ user.year }}
+                                </span>
+
+                            </p>
+
+                        </div>
+                    </div>
+
+                    <p id="displayBio"
+                       class="profile-bio"
+                       {% if not user.bio %}
+                       style="display:none;"
+                       {% endif %}>
+
+                        {{ user.bio }}
+
+                    </p>
+
+                </div>
+
+                <!-- EDIT PROFILE PANEL -->
+
+                <div id="editProfilePanel"
+                     class="sub-card hidden">
+
+                    <h3 class="section-subtitle"
+                        data-i18n="editTitle">
+                        Editare informații profil
+                    </h3>
+
+                    <form id="editProfileForm"
+                          class="clean-form">
+
+                        <div class="form-row">
+
+                            <label data-i18n="lblName">
+                                Nume complet
+                            </label>
+
+                            <input type="text"
+                                   id="inputFullName"
+                                   value="{{ user.full_name }}"
+                                   required>
+                        </div>
+
+                        <div class="form-row">
+
+                            <label data-i18n="lblFaculty">
+                                Facultate
+                            </label>
+
+                            <input type="text"
+                                   id="inputFaculty"
+                                   value="{{ user.faculty }}">
+                        </div>
+
+                        <div class="form-row">
+
+                            <label data-i18n="lblYear">
+                                An de studiu
+                            </label>
+
+                            <input type="text"
+                                   id="inputYear"
+                                   value="{{ user.year }}">
+                        </div>
+
+                        <div class="form-row">
+
+                            <label data-i18n="lblBio">
+                                Despre mine
+                            </label>
+
+                            <textarea id="inputBio"
+                                      rows="2">{{ user.bio }}</textarea>
+                        </div>
+
+                        <div class="form-buttons">
+
+                            <button type="submit"
+                                    class="primary-button"
+                                    data-i18n="saveChanges">
+                                Salvează
+                            </button>
+
+                            <span id="editStatus"
+                                  class="status-text"></span>
+
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- SETTINGS PANEL -->
+
+                <div id="settingsPanel"
+                     class="sub-card hidden">
+
+                    <h3 class="section-subtitle"
+                        data-i18n="settingsTitle">
+                        Setări cont & confidențialitate
+                    </h3>
+
+                    <div class="settings-list">
+
+                        <div class="setting-item">
+
+                            <div>
+                                <strong data-i18n="setPrivate">
+                                    Cont privat
+                                </strong>
+
+                                <p data-i18n="setPrivateDesc">
+                                    Doar prietenii aprobați îți pot
+                                    vedea profilul și activitatea.
+                                </p>
+                            </div>
+
+                            <input type="checkbox"
+                                   id="chkPrivateAccount"
+                                   {% if user.private_account %}
+                                   checked
+                                   {% endif %}>
+                        </div>
+
+                        <div class="setting-item">
+
+                            <div>
+                                <strong data-i18n="setEmailNotif">
+                                    Notificări pe email
+                                </strong>
+
+                                <p data-i18n="setEmailDesc">
+                                    Primește alerte când cineva îți
+                                    trimite un mesaj nou.
+                                </p>
+                            </div>
+
+                            <input type="checkbox"
+                                   id="chkEmailNotif"
+                                   {% if user.email_notifications %}
+                                   checked
+                                   {% endif %}>
+                        </div>
+
+                        <div class="setting-item">
+
+                            <div>
+                                <strong data-i18n="setAccountEmail">
+                                    Email asociat
+                                </strong>
+
+                                <p>{{ user.email }}</p>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ===================== -->
+            <!-- NOTIFICATIONS -->
+            <!-- ===================== -->
+
+            <section id="tab-notifications"
+                     class="tab-panel">
+
+                <div class="page-heading">
+                    <div class="title-row">
+                        <h1 data-i18n="navNotifications">
+                            Notificări
+                        </h1>
+                    </div>
+                </div>
+
+                <div id="notificationsContainer"
+                     class="module-placeholder">
+
+                    <p class="empty-msg"
+                       data-i18n="emptyNotifications">
+                        Nicio notificare încă.
+                    </p>
+
+                </div>
+
+            </section>
+
+            <!-- ===================== -->
+            <!-- SEARCH -->
+            <!-- ===================== -->
+
+            <section id="tab-search"
+                     class="tab-panel">
+
+                <div class="page-heading">
+                    <div class="title-row">
+                        <h1 data-i18n="navSearch">
+                            Căutare
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="sub-card">
+
+                    <div class="search-box"
+                         style="width:100%;">
+
+                        <span>⌕</span>
+
+                        <input type="text"
+                               id="searchInput"
+                               placeholder="Caută..."
+                               data-i18n-placeholder="searchPlaceholder">
+                    </div>
+
+                </div>
+
+                <div id="searchResultsContainer"
+                     class="module-placeholder">
+                </div>
+
+            </section>
+
+            <!-- ===================== -->
+            <!-- FRIENDS -->
+            <!-- ===================== -->
+
+            <section id="tab-friends"
+                     class="tab-panel">
+
+                <div class="page-heading">
+                    <div class="title-row">
+                        <h1 data-i18n="navFriends">
+                            Prieteni
+                        </h1>
+                    </div>
+                </div>
+
+                <div id="friendsContainer"
+                     class="module-placeholder">
+
+                    <p class="empty-msg"
+                       data-i18n="emptyFriends">
+                        Lista de prieteni este goală.
+                    </p>
+
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+</div>
+
+<!-- UNIBUDDY AI -->
+<button type="button"
+        id="buddyBtn"
+        class="ai-toggle buddy-floating">
+    ✦ BUDDY
+</button>
+
+<!-- PROFILE JAVASCRIPT -->
+<script src="{{ url_for('static', filename='profile.js') }}"></script>
+<script src="{{ url_for('static', filename='buddy-navigation.js') }}"></script>
+
+</body>
+</html>

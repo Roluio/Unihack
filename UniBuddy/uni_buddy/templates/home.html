@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniBuddy - Acasă</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='profile.css') }}">
+</head>
+<body>
+    <div class="app">
+        <!-- BARA LATERALĂ (identică cu restul aplicației) -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">✦</div>
+                <span>UniBuddy</span>
+            </div>
+
+            <nav class="navigation">
+                <a href="/home" class="nav-item active" style="text-decoration: none;">
+                    <span class="nav-icon">⌂</span>
+                    <span data-i18n="navHome">Acasă</span>
+                </a>
+                <a href="/profile" class="nav-item" style="text-decoration: none;">
+                    <span class="nav-icon">◈</span>
+                    <span data-i18n="navProfile">Profilul meu</span>
+                </a>
+                <a href="/profile#posts" class="nav-item" style="text-decoration: none;">
+                    <span class="nav-icon">✎</span>
+                    <span data-i18n="navPosts">Postările mele</span>
+                </a>
+                <a href="/profile#messages" class="nav-item" style="text-decoration: none;">
+                    <span class="nav-icon">✉</span>
+                    <span data-i18n="navMessages">Mesaje</span>
+                </a>
+                <a href="/profile#notifications" class="nav-item" style="text-decoration: none;">
+                    <span class="nav-icon">🔔</span>
+                    <span data-i18n="navNotifications">Notificări</span>
+                </a>
+                <a href="/profile#search" class="nav-item" style="text-decoration: none;">
+                    <span class="nav-icon">⌕</span>
+                    <span data-i18n="navSearch">Căutare</span>
+                </a>
+                <a href="/profile#friends" class="nav-item" style="text-decoration: none;">
+                    <span class="nav-icon">☺</span>
+                    <span data-i18n="navFriends">Prieteni</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="profile">
+                    <div class="avatar">{{ username[0]|upper }}</div>
+                    <div class="profile-info">
+                        <strong>{{ user.full_name }}</strong>
+                        <span>@{{ username }}</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ZONA PRINCIPALĂ -->
+        <div class="main-content">
+            <header class="topbar">
+                <div class="top-actions">
+                    <div class="language-dropdown" id="langDropdown">
+                        <button type="button" id="langMenuBtn" class="lang-btn">
+                            <span data-i18n="langLabel">LIMBĂ</span>
+                            <span class="arrow">▾</span>
+                        </button>
+                        <ul id="langOptions" class="lang-options hidden">
+                            <li><button type="button" class="lang-option" data-lang="en">ENGLISH</button></li>
+                            <li><button type="button" class="lang-option active" data-lang="ro">ROMÂNĂ</button></li>
+                        </ul>
+                    </div>
+
+                    <a href="/logout" class="logout-btn" data-i18n="logout">Deconectare</a>
+                </div>
+            </header>
+
+            <main class="content">
+                <div class="page-heading">
+                    <div class="title-row">
+                        <h1 data-i18n="homeTitle">Acasă</h1>
+                    </div>
+                </div>
+
+                <!-- Container feed prieteni (pregătit pentru integrarea cu modulul colegei) -->
+                <div id="homeFeedContainer" class="module-placeholder" style="max-width: 680px;">
+                    <p class="empty-msg" data-i18n="emptyHome">Nicio postare recentă de la prieteni.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <button type="button" id="buddyBtn" class="ai-toggle buddy-floating">✦ BUDDY</button>
+
+    <script src="{{ url_for('static', filename='profile.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniBuddy | Messages</title>
+
+    <link rel="stylesheet" href="messages.css">
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+</head>
+
+<body>
+<div class="messenger" id="messenger">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i data-lucide="graduation-cap"></i>
+            </div>
+            <span>UniBuddy</span>
+        </div>
+
+        <div class="sidebar-heading">
+            <div>
+                <h2>Messages</h2>
+                <p>Stay connected with your buddies.</p>
+            </div>
+
+            <a href="index.html" class="library-link"
+               title="Go to Library">
+                <i data-lucide="folder-open"></i>
+            </a>
+        </div>
+
+        <div class="search-box">
+            <i data-lucide="search"></i>
+            <input
+                id="searchInput"
+                type="search"
+                placeholder="Search conversations..."
+                autocomplete="off"
+            >
+        </div>
+
+        <!-- STUDY GROUPS -->
+        <section class="sidebar-section">
+            <div class="section-title">
+                <h3>
+                    <i data-lucide="users-round"></i>
+                    Your Groups
+                </h3>
+
+                <button class="small-icon-btn" id="newGroupBtn"
+                        title="Create group">
+                    <i data-lucide="plus"></i>
+                </button>
+            </div>
+
+            <div class="conversation-list" id="groupsList"></div>
+        </section>
+
+        <!-- PRIVATE CHATS -->
+        <section class="sidebar-section messages-section">
+            <div class="section-title">
+                <h3>
+                    <i data-lucide="message-circle"></i>
+                    Your Messages
+                </h3>
+
+                <button class="small-icon-btn" id="newChatBtn"
+                        title="New conversation">
+                    <i data-lucide="square-pen"></i>
+                </button>
+            </div>
+
+            <div class="conversation-list" id="messagesList"></div>
+        </section>
+
+        <div class="sidebar-footer">
+            <div class="profile-avatar">S</div>
+            <div class="profile-details">
+                <strong>Student</strong>
+                <span>UniBuddy Member</span>
+            </div>
+            <i data-lucide="settings"></i>
+        </div>
+    </aside>
+
+    <!-- CHAT -->
+    <main class="chat-area">
+
+        <header class="chat-header">
+            <div class="chat-contact">
+
+                <button class="back-mobile" id="mobileBack"
+                        title="Back">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+
+                <button class="chat-avatar" id="chatAvatar"
+                        title="View profile">
+                    <i data-lucide="user-round"></i>
+                </button>
+
+                <div class="chat-contact-info">
+                    <h2 id="chatName">Your Messages</h2>
+                    <p id="chatStatus">
+                        Select a conversation to start chatting
+                    </p>
+                </div>
+            </div>
+
+            <div class="chat-header-actions">
+
+                <button class="header-icon" id="searchChatButton"
+                        title="Search in conversation" disabled>
+                    <i data-lucide="search"></i>
+                </button>
+
+                <button class="header-icon" id="chatInfoButton"
+                        title="Conversation info" disabled>
+                    <i data-lucide="info"></i>
+                </button>
+
+                <div class="more-wrapper">
+                    <button class="header-icon" id="moreButton"
+                            title="More options" disabled>
+                        <i data-lucide="ellipsis-vertical"></i>
+                    </button>
+
+                    <div class="chat-dropdown hidden" id="chatDropdown">
+                        <button id="viewProfileOption">
+                            <i data-lucide="user-round"></i>
+                            View Profile
+                        </button>
+
+                        <button id="searchOption">
+                            <i data-lucide="search"></i>
+                            Search in Conversation
+                        </button>
+
+                        <button id="deleteOption" class="danger-option">
+                            <i data-lucide="trash-2"></i>
+                            Delete Conversation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SEARCH WITHIN CHAT -->
+        <div class="chat-search-panel hidden" id="chatSearchPanel">
+            <div class="chat-search-top">
+                <i data-lucide="search"></i>
+
+                <input
+                    id="chatSearchInput"
+                    type="search"
+                    placeholder="Search messages in this chat..."
+                    autocomplete="off"
+                >
+
+                <button class="header-icon" id="closeChatSearch"
+                        title="Close search">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="search-results-info" id="searchResultsInfo">
+                Type a word to search this conversation.
+            </div>
+
+            <div class="chat-search-results" id="chatSearchResults"></div>
+        </div>
+
+        <!-- MESSAGES -->
+        <div class="chat-body" id="chatBody">
+            <div class="welcome-state">
+                <div class="welcome-icon">
+                    <i data-lucide="messages-square"></i>
+                </div>
+                <h2>Your conversations start here!</h2>
+                <p>Select a friend or study group to start chatting.</p>
+            </div>
+        </div>
+
+        <!-- COMPOSER -->
+        <div class="chat-composer hidden" id="chatComposer">
+            <form id="messageForm" class="composer-box">
+
+                <button type="button" class="composer-action"
+                        id="attachmentBtn" title="Attach file">
+                    <i data-lucide="paperclip"></i>
+                </button>
+
+                <textarea
+                    id="messageInput"
+                    rows="1"
+                    maxlength="3000"
+                    placeholder="Type your message..."
+                ></textarea>
+
+                <button type="submit" class="send-button"
+                        title="Send message">
+                    <i data-lucide="send"></i>
+                </button>
+            </form>
+
+            <div class="composer-hint">
+                Enter to send · Shift + Enter for a new line
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- CREATE CONVERSATION MODAL -->
+<div class="modal-overlay hidden" id="createModal">
+    <div class="dialog">
+        <div class="dialog-header">
+            <h2 id="dialogTitle">New Conversation</h2>
+
+            <button class="header-icon" id="closeModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <form id="createForm">
+            <label for="conversationName" id="nameLabel">Name</label>
+
+            <input
+                type="text"
+                id="conversationName"
+                maxlength="60"
+                placeholder="Enter name..."
+                required
+            >
+
+            <div class="dialog-buttons">
+                <button type="button" class="cancel-button"
+                        id="cancelModal">Cancel</button>
+
+                <button type="submit" class="create-button">
+                    Create
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay hidden" id="profileModal">
+    <div class="profile-dialog">
+
+        <div class="profile-cover">
+            <button class="profile-close" id="closeProfile"
+                    title="Close profile">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="profile-main">
+            <div class="large-profile-avatar" id="profileAvatar">M</div>
+
+            <h2 id="profileName">Maria Ionescu</h2>
+            <p id="profileSubtitle">UniBuddy Member</p>
+
+            <div class="profile-about">
+                <h3>
+                    <i data-lucide="user-round"></i>
+                    About
+                </h3>
+                <p id="profileAbout"></p>
+            </div>
+
+            <div class="mutual-groups-section">
+                <div class="mutual-heading">
+                    <h3>
+                        <i data-lucide="users-round"></i>
+                        Groups in Common
+                    </h3>
+
+                    <span id="mutualGroupCount">0 groups</span>
+                </div>
+
+                <div id="mutualGroupsList" class="mutual-groups-list"></div>
+            </div>
+
+            <button class="profile-message-btn" id="profileMessageBtn">
+                <i data-lucide="message-circle"></i>
+                Back to Conversation
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast">
+    <i data-lucide="check-circle-2"></i>
+    <span id="toastText"></span>
+</div>
+
+<script src="messages.js"></script>
+</body>
+</html>
