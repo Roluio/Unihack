@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>UniBuddy AI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='ai.css') }}">
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<div class="ai-app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <a href="/home" class="brand">
+            <div class="brand-logo">
+                <i data-lucide="sparkles"></i>
+            </div>
+            <span>UniBuddy</span>
+        </a>
+
+        <div class="ai-label">
+            <i data-lucide="bot"></i>
+            UniBuddy AI
+        </div>
+
+        <button id="newChatBtn" class="new-chat">
+            <i data-lucide="plus"></i>
+            New Chat
+        </button>
+
+        <div class="history-heading">
+            <span>CHAT HISTORY</span>
+            <i data-lucide="history"></i>
+        </div>
+
+        <div id="chatHistory" class="chat-history"></div>
+
+        <div class="sidebar-bottom">
+            <a href="/home">
+                <i data-lucide="house"></i>
+                Home
+            </a>
+            <a href="/library">
+                <i data-lucide="folder-open"></i>
+                Library
+            </a>
+            <a href="/messages">
+                <i data-lucide="message-circle"></i>
+                Messages
+            </a>
+            <a href="/profile">
+                <i data-lucide="user-round"></i>
+                My Profile
+            </a>
+        </div>
+
+        <div class="user-card">
+            <div class="user-avatar">
+                {{ username[0]|upper }}
+            </div>
+            <div>
+                <strong>{{ user.full_name }}</strong>
+                <small>@{{ username }}</small>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- MAIN CHAT -->
+    <main class="main-area">
+
+        <header class="topbar">
+
+            <div class="topbar-title">
+                <div class="topbar-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div>
+                    <h2>UniBuddy AI</h2>
+                    <p>Your personal study assistant</p>
+                </div>
+            </div>
+
+            <div class="topbar-actions">
+                <select id="languageSelect"
+                        aria-label="Response language">
+                    <option value="ro">Română</option>
+                    <option value="en">English</option>
+                </select>
+
+                <button id="clearChatBtn"
+                        class="icon-btn"
+                        title="Clear current chat">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- CHAT MESSAGES -->
+        <section id="chatArea" class="chat-area">
+
+            <div id="welcomeScreen" class="welcome">
+
+                <div class="welcome-logo">
+                    <i data-lucide="sparkles"></i>
+                </div>
+
+                <h1 id="welcomeTitle">
+                    How can I help you study?
+                </h1>
+
+                <p id="welcomeDescription">
+                    Ask anything, understand difficult topics,
+                    summarize notes or prepare for exams.
+                </p>
+
+                <div class="quick-actions">
+
+                    <button class="action-card"
+                            data-action="explain">
+                        <i data-lucide="lightbulb"></i>
+                        <strong>Explain a topic</strong>
+                        <span>Make difficult concepts simple</span>
+                    </button>
+
+                    <button class="action-card"
+                            data-action="summary">
+                        <i data-lucide="book-open-text"></i>
+                        <strong>Summarize notes</strong>
+                        <span>Get the most important ideas</span>
+                    </button>
+
+                    <button class="action-card"
+                            data-action="quiz">
+                        <i data-lucide="clipboard-list"></i>
+                        <strong>Generate a quiz</strong>
+                        <span>Practice for your exam</span>
+                    </button>
+
+                    <button class="action-card"
+                            data-action="plan">
+                        <i data-lucide="calendar-check"></i>
+                        <strong>Study plan</strong>
+                        <span>Organize your learning</span>
+                    </button>
+
+                </div>
+            </div>
+
+            <div id="messagesContainer"
+                 class="messages-container hidden"></div>
+
+        </section>
+
+        <!-- COMPOSER -->
+        <div class="composer-section">
+
+            <div class="context-panel hidden" id="contextPanel">
+                <div class="context-heading">
+                    <strong>
+                        <i data-lucide="file-text"></i>
+                        Course notes
+                    </strong>
+                    <button id="closeContextBtn" title="Close">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <textarea
+                    id="courseNotes"
+                    placeholder="Paste your course notes here..."
+                    maxlength="20000"
+                    rows="5"></textarea>
+                <p>
+                    These notes will be sent with your question
+                    to help the AI answer.
+                </p>
+            </div>
+
+            <form id="chatForm" class="composer">
+
+                <button id="notesBtn"
+                        type="button"
+                        class="composer-tool"
+                        title="Add course notes">
+                    <i data-lucide="file-plus-2"></i>
+                </button>
+
+                <textarea
+                    id="messageInput"
+                    placeholder="Ask UniBuddy AI anything..."
+                    rows="1"
+                    maxlength="4000"
+                    required></textarea>
+
+                <button id="sendBtn"
+                        class="send-btn"
+                        type="submit"
+                        title="Send">
+                    <i data-lucide="arrow-up"></i>
+                </button>
+
+            </form>
+
+            <p class="composer-info" id="composerInfo">
+                UniBuddy AI can make mistakes.
+                Check important information.
+            </p>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    window.UNIBUDDY_USERNAME = {{ username | tojson }};
+</script>
+<script src="{{ url_for('static', filename='ai.js') }}"></script>
+
+</body>
+</html>
