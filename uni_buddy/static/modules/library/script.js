@@ -977,7 +977,7 @@ function closePreview() {
 }
 
 // ========================================
-// UNIBUDDY AI PANEL
+// BUDDY PANEL
 // ========================================
 
 function toggleAIPanel(force = null) {
@@ -1007,7 +1007,7 @@ function resetAIChat() {
         <div class="ai-welcome-icon">
             ${icon("brain-circuit")}
         </div>
-        <h3>Study smarter with UniBuddy</h3>
+        <h3>Study smarter with StudyGram</h3>
         <p>Select an action or ask about this document.</p>
         <div class="ai-suggestions">
             <button data-ai-action="summary">
@@ -1040,7 +1040,14 @@ function resetAIChat() {
 function addAIMessage(role, text) {
     const message = document.createElement("div");
     message.className = `ai-message ${role}`;
-    message.textContent = text;
+
+    if (role === "assistant" && typeof renderMarkdown === "function") {
+        message.classList.add("md");
+        // renderMarkdown escapes all HTML before formatting.
+        message.innerHTML = renderMarkdown(text);
+    } else {
+        message.textContent = text;
+    }
 
     $("aiMessages").appendChild(message);
     $("aiMessages").scrollTop = $("aiMessages").scrollHeight;
@@ -1067,35 +1074,74 @@ function aiSuggestedPrompt(action) {
     return prompts[action] || "";
 }
 
-function sendAIMessage(question) {
-    if (!activeFile || !question.trim()) return;
+const aiHistories = new Map();   // file id -> [{role, content}]
+let aiBusy = false;
+
+async function sendAIMessage(question) {
+    question = question.trim();
+    if (!activeFile || !question || aiBusy) return;
 
     const welcome = $("aiWelcome");
     if (welcome) welcome.remove();
 
-    addAIMessage("user", question.trim());
-
-    // Frontend-only demonstration.
-    // Later: POST /api/ai/chat with materialId, message, language.
-    const ro = $("aiLanguage").value === "ro";
-
-    const answer = ro
-        ? `Interfața UniBuddy AI este pregătită! 💜
-
-Document selectat: ${activeFile.name}
-
-Pentru un răspuns bazat pe acest fișier, trebuie conectat API-ul AI la backend. Până atunci, acest mesaj este doar o demonstrație.`
-        : `UniBuddy AI interface is ready! 💜
-
-Selected document: ${activeFile.name}
-
-To answer questions using this file, the AI backend must be connected. This is a demo message, not an analysis of the document.`;
-
-    addAIMessage("assistant", answer);
+    addAIMessage("user", question);
     $("aiInput").value = "";
+
+    const ro = $("aiLanguage").value === "ro";
+    const fileId = activeFile.id;
+    const history = aiHistories.get(fileId) || [];
+
+    aiBusy = true;
+
+    const pending = document.createElement("div");
+    pending.className = "ai-message assistant";
+    pending.textContent = ro
+        ? "Buddy citește documentul..."
+        : "Buddy is reading the document...";
+    $("aiMessages").appendChild(pending);
+    $("aiMessages").scrollTop = $("aiMessages").scrollHeight;
+
+    try {
+        // The file itself is sent so Gemini can read it (PDF, image, text).
+        const form = new FormData();
+        form.append("message", question);
+        form.append("language", $("aiLanguage").value);
+        form.append("history", JSON.stringify(history));
+
+        if (activeFile.blob) {
+            form.append("file", activeFile.blob, activeFile.name);
+        }
+
+        const response = await fetch("/api/ai/chat", {
+            method: "POST",
+            body: form
+        });
+
+        let data = {};
+        try { data = await response.json(); } catch { /* non-JSON error */ }
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.message ||
+                (ro ? "Nu am putut obține un răspuns." : "Buddy could not answer.")
+            );
+        }
+
+        pending.remove();
+        addAIMessage("assistant", data.reply);
+
+        history.push({ role: "user", content: question });
+        history.push({ role: "assistant", content: data.reply });
+        aiHistories.set(fileId, history.slice(-12));
+
+    } catch (error) {
+        pending.remove();
+        addAIMessage("assistant", `⚠️ ${error.message}`);
+    } finally {
+        aiBusy = false;
+    }
 }
 
-// This function will be useful during backend integration.
 function buildAIRequest(question) {
     return {
         materialId: activeFile?.id,
@@ -1272,7 +1318,18 @@ async function initialize() {
 
     } catch (error) {
         console.error(error);
-        alert("Could not initialize UniBuddy Library.");
+        alert("Could not initialize StudyGram Library.");
+    }
+}
+
+{
+    const aiLanguage = $("aiLanguage");
+    if (aiLanguage) {
+        aiLanguage.value =
+            localStorage.getItem("UniBuddyForumLanguage") === "en" ? "en" : "ro";
+        aiLanguage.addEventListener("change", () => {
+            localStorage.setItem("UniBuddyForumLanguage", aiLanguage.value);
+        });
     }
 }
 

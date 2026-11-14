@@ -1,6 +1,6 @@
 
 // ==========================================
-// UNIBUDDY - LUCIDE NAVIGATION ICONS
+// STUDYGRAM - LUCIDE NAVIGATION ICONS
 // Home + Profile
 // ==========================================
 

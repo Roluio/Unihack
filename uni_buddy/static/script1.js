@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedLang = btn.getAttribute('data-lang');
             loginStatus.textContent = '';
             signupStatus.textContent = '';
+            try { localStorage.setItem('UniBuddyForumLanguage', selectedLang); } catch (e) { /* ignore */ }
             applyLanguage(selectedLang);
 
             langOptionsList.classList.add('hidden');
@@ -99,6 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
             langMenuBtn.classList.remove('open');
         }
     });
+
+    // Restore the language chosen earlier (shared with the rest of the app).
+    try {
+        const savedLang = localStorage.getItem('UniBuddyForumLanguage');
+        if (savedLang === 'ro' || savedLang === 'en') {
+            applyLanguage(savedLang);
+        }
+    } catch (e) { /* ignore */ }
 
     showSignupBtn.addEventListener('click', (e) => {
         e.preventDefault();

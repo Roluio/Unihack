@@ -1,6 +1,6 @@
 
 // ==========================================
-// UNIBUDDY - SUBJECT LANGUAGE SUGGESTIONS
+// STUDYGRAM - SUBJECT LANGUAGE SUGGESTIONS
 // RO / EN - DYNAMIC SUBJECT LIST
 // ==========================================
 

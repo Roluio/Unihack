@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Temporary StudyGram logo (redrawn). Save the original picture as logo.png in this folder to replace it. -->
+  <circle cx="512" cy="512" r="418" fill="#3a0d6b"/>
+
+  <!-- antennas -->
+  <g stroke="#3a0d6b" stroke-width="12" stroke-linecap="round">
+    <line x1="362" y1="170" x2="372" y2="228" stroke="#cbc3d9" stroke-width="16"/>
+    <line x1="662" y1="170" x2="652" y2="228" stroke="#cbc3d9" stroke-width="16"/>
+  </g>
+  <circle cx="335" cy="132" r="40" fill="#8b1f45" stroke="#3a0d6b" stroke-width="10"/>
+  <circle cx="689" cy="132" r="40" fill="#8b1f45" stroke="#3a0d6b" stroke-width="10"/>
+
+  <!-- ears -->
+  <ellipse cx="268" cy="398" rx="40" ry="62" fill="#8b1f45" stroke="#3a0d6b" stroke-width="10"/>
+  <ellipse cx="756" cy="398" rx="40" ry="62" fill="#8b1f45" stroke="#3a0d6b" stroke-width="10"/>
+
+  <!-- head -->
+  <rect x="290" y="205" width="444" height="335" rx="150" fill="#cbc3d9" stroke="#3a0d6b" stroke-width="14"/>
+  <rect x="325" y="285" width="374" height="215" rx="95" fill="#f0e8fe" stroke="#3a0d6b" stroke-width="14"/>
+
+  <!-- face -->
+  <ellipse cx="432" cy="388" rx="38" ry="50" fill="#3a0d6b"/>
+  <ellipse cx="610" cy="388" rx="38" ry="50" fill="#3a0d6b"/>
+  <circle cx="420" cy="372" r="11" fill="#fff"/>
+  <circle cx="598" cy="372" r="11" fill="#fff"/>
+  <path d="M488 432 Q512 462 538 432" fill="none" stroke="#3a0d6b" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- body -->
+  <rect x="340" y="530" width="345" height="170" rx="40" fill="#cbc3d9" stroke="#3a0d6b" stroke-width="12"/>
+
+  <!-- feet -->
+  <ellipse cx="335" cy="820" rx="112" ry="88" fill="#f0e8fe" stroke="#3a0d6b" stroke-width="14"/>
+  <ellipse cx="690" cy="820" rx="112" ry="88" fill="#f0e8fe" stroke="#3a0d6b" stroke-width="14"/>
+
+  <!-- book -->
+  <path d="M300 540 L512 600 L724 540 L724 560 L512 622 L300 560 Z" fill="#fff" stroke="#3a0d6b" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M272 575 L492 622 L488 825 L290 770 Z" fill="#b99af0" stroke="#3a0d6b" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M752 575 L532 622 L536 825 L734 770 Z" fill="#b99af0" stroke="#3a0d6b" stroke-width="14" stroke-linejoin="round"/>
+  <rect x="488" y="610" width="48" height="225" rx="8" fill="#8f6bd0" stroke="#3a0d6b" stroke-width="12"/>
+  <text x="512" y="720" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#8b1f45" text-anchor="middle" transform="rotate(-90 512 720)">BUDDY</text>
+
+  <!-- hands -->
+  <circle cx="290" cy="672" r="58" fill="#cbc3d9" stroke="#3a0d6b" stroke-width="14"/>
+  <circle cx="738" cy="672" r="58" fill="#cbc3d9" stroke="#3a0d6b" stroke-width="14"/>
+</svg>

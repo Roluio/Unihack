@@ -1,6 +1,6 @@
 ﻿
 /*
- * UNIBUDDY - NOTIFICATIONS
+ * STUDYGRAM - NOTIFICATIONS
  * Frontend prototype
  * Forum + Shared Files
  *

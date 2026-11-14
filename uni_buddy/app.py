@@ -1,5 +1,6 @@
 
 import os
+import time
 
 from flask import (
     Flask,
@@ -11,7 +12,12 @@ from flask import (
     url_for
 )
 
+import gemini_service as ai
+
 app = Flask(__name__)
+
+# Max upload for AI documents (several files per request): 32 MB
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 
 # Cheie pentru sesiuni - doar pentru dezvoltare locală
 app.secret_key = os.environ.get(
@@ -326,18 +332,88 @@ def update_profile():
 
     data = request.get_json(silent=True) or {}
 
-    for field in [
-        "full_name",
-        "faculty",
-        "year",
-        "bio"
-    ]:
+    limits = {
+        "full_name": 80,
+        "faculty": 120,
+        "year": 30,
+        "bio": 500
+    }
+
+    if "full_name" in data and not str(data["full_name"]).strip():
+        return jsonify({
+            "success": False,
+            "message": "Numele nu poate fi gol."
+        }), 400
+
+    if "email" in data:
+        email = str(data["email"]).strip()
+
+        if "@" not in email or "." not in email or len(email) > 120:
+            return jsonify({
+                "success": False,
+                "message": "Introdu o adresă de email validă."
+            }), 400
+
+        user["email"] = email
+
+    for field, limit in limits.items():
         if field in data and isinstance(data[field], str):
-            user[field] = data[field].strip()
+            user[field] = data[field].strip()[:limit]
+
+    public_user = {
+        key: value
+        for key, value in user.items()
+        if key != "password"
+    }
 
     return jsonify({
         "success": True,
-        "user": user
+        "user": public_user
+    })
+
+
+# ==========================================
+# CHANGE PASSWORD API
+# ==========================================
+
+@app.route("/api/profile/password", methods=["POST"])
+def change_password():
+    username, user = current_user()
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "Neautorizat."
+        }), 401
+
+    data = request.get_json(silent=True) or {}
+
+    current_password = str(data.get("current_password", ""))
+    new_password = str(data.get("new_password", "")).strip()
+    confirm_password = str(data.get("confirm_password", "")).strip()
+
+    if user["password"] != current_password.strip():
+        return jsonify({
+            "success": False,
+            "message": "Parola actuală este greșită."
+        }), 400
+
+    if len(new_password) < 4:
+        return jsonify({
+            "success": False,
+            "message": "Parola trebuie să aibă minim 4 caractere."
+        }), 400
+
+    if new_password != confirm_password:
+        return jsonify({
+            "success": False,
+            "message": "Parolele nu coincid."
+        }), 400
+
+    user["password"] = new_password
+
+    return jsonify({
+        "success": True
     })
 
 
@@ -374,21 +450,288 @@ def update_settings():
 
 
 # ==========================================
-# UNIBUDDY AI
+# BUDDY (Gemini API)
 # ==========================================
 
 @app.route("/ai")
 def ai_page():
-    username = session.get("username")
+    username, user = current_user()
 
-    if not username or username not in USERS:
+    if not user:
         return redirect(url_for("index"))
 
     return render_template(
         "ai.html",
         username=username,
-        user=USERS[username]
+        user=user
     )
+
+
+# Simple in-memory rate limit: max 40 AI calls / minute / user
+_AI_CALLS = {}
+
+
+def _rate_limited(username):
+    now = time.time()
+    recent = [t for t in _AI_CALLS.get(username, []) if now - t < 60]
+    if len(recent) >= 40:
+        _AI_CALLS[username] = recent
+        return True
+    recent.append(now)
+    _AI_CALLS[username] = recent
+    return False
+
+
+def _json_field(value, default):
+    import json as _json
+    if isinstance(value, (list, dict)):
+        return value
+    try:
+        parsed = _json.loads(value)
+        return parsed if isinstance(parsed, type(default)) else default
+    except (ValueError, TypeError):
+        return default
+
+
+def _clean_catalog(raw):
+    """Sanitise the file catalog sent by the browser (the student's 'memory')."""
+    catalog = []
+    for item in (raw if isinstance(raw, list) else [])[:200]:
+        if not isinstance(item, dict) or not item.get("key") or not item.get("name"):
+            continue
+        catalog.append({
+            "key": str(item["key"])[:80],
+            "name": str(item["name"])[:120],
+            "mime": str(item.get("mime", ""))[:60],
+            "source": str(item.get("source", ""))[:20],
+            "folder": str(item.get("folder", ""))[:80],
+            "supported": bool(item.get("supported", True)),
+        })
+    return catalog
+
+
+def _ai_request():
+    """Parse JSON or multipart body. Returns (payload dict, [documents])."""
+    documents = []
+
+    if request.mimetype == "multipart/form-data":
+        payload = request.form.to_dict()
+
+        for upload in request.files.getlist("file")[:ai.MAX_DOCS]:
+            if upload and upload.filename:
+                documents.append({
+                    "data": upload.read(),
+                    "mime": upload.mimetype,
+                    "name": upload.filename
+                })
+
+        payload["history"] = _json_field(payload.get("history"), [])
+        payload["catalog"] = _json_field(payload.get("catalog"), [])
+    else:
+        payload = request.get_json(silent=True) or {}
+
+    return payload, documents
+
+
+def _ai_endpoint(handler):
+    """Shared auth / rate limit / error handling for AI routes."""
+    username, user = current_user()
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "Neautorizat."
+        }), 401
+
+    if _rate_limited(username):
+        return jsonify({
+            "success": False,
+            "message": "Prea multe cereri. Mai așteaptă puțin."
+        }), 429
+
+    try:
+        payload, document = _ai_request()
+        language = payload.get("language")
+        language = language if language in ("ro", "en") else "ro"
+        result = handler(payload, document, language, user)
+        return jsonify({"success": True, **result})
+    except ai.AIError as error:
+        return jsonify({
+            "success": False,
+            "message": str(error)
+        }), error.status
+    except (ValueError, TypeError):
+        return jsonify({
+            "success": False,
+            "message": "Cerere invalidă."
+        }), 400
+
+
+def _text(payload, key, limit=20000):
+    return str(payload.get(key, "") or "").strip()[:limit]
+
+
+@app.route("/api/ai/status")
+def ai_status():
+    username, user = current_user()
+
+    if not user:
+        return jsonify({"success": False}), 401
+
+    return jsonify({
+        "success": True,
+        "configured": ai.api_key_configured() and ai.SDK_AVAILABLE,
+        "models": ai.model_candidates()
+    })
+
+
+@app.route("/api/ai/chat", methods=["POST"])
+def ai_chat():
+    def run(payload, document, language, user):
+        message = _text(payload, "message", 4000)
+        if not message:
+            raise ValueError("empty message")
+
+        history = payload.get("history")
+        history = history if isinstance(history, list) else []
+
+        reply = ai.chat(
+            message,
+            history,
+            _text(payload, "notes"),
+            language,
+            user,
+            document,
+            _clean_catalog(payload.get("catalog"))
+        )
+        return {"reply": reply}
+
+    return _ai_endpoint(run)
+
+
+@app.route("/api/ai/route", methods=["POST"])
+def ai_route():
+    """AI memory: pick which of the student's files a request needs."""
+    def run(payload, document, language, user):
+        message = _text(payload, "message", 1500)
+        history = payload.get("history")
+        history = history if isinstance(history, list) else []
+        catalog = _clean_catalog(payload.get("catalog"))
+
+        if not message or not catalog:
+            return {"files": []}
+
+        keys = ai.route_files(message, history, catalog, language, user)
+        return {"files": keys}
+
+    return _ai_endpoint(run)
+
+
+@app.route("/api/ai/summarize", methods=["POST"])
+def ai_summarize():
+    def run(payload, document, language, user):
+        text = _text(payload, "text", 60000)
+        if not text and not document:
+            raise ai.AIError(
+                "Lipește un text sau încarcă un fișier de rezumat.",
+                status=400
+            )
+
+        reply = ai.summarize(
+            text,
+            document,
+            payload.get("style", "detailed"),
+            language,
+            user
+        )
+        return {"reply": reply}
+
+    return _ai_endpoint(run)
+
+
+@app.route("/api/ai/quiz", methods=["POST"])
+def ai_quiz():
+    def run(payload, document, language, user):
+        topic = _text(payload, "topic", 300)
+        text = _text(payload, "text", 60000)
+
+        if not (topic or text or document):
+            raise ai.AIError(
+                "Spune-mi o temă, lipește notițe sau încarcă un fișier.",
+                status=400
+            )
+
+        data = ai.quiz(
+            topic,
+            text,
+            document,
+            payload.get("count", 5),
+            payload.get("difficulty", "medium"),
+            language,
+            user
+        )
+        return {"quiz": data}
+
+    return _ai_endpoint(run)
+
+
+@app.route("/api/ai/flashcards", methods=["POST"])
+def ai_flashcards():
+    def run(payload, document, language, user):
+        topic = _text(payload, "topic", 300)
+        text = _text(payload, "text", 60000)
+
+        if not (topic or text or document):
+            raise ai.AIError(
+                "Spune-mi o temă, lipește notițe sau încarcă un fișier.",
+                status=400
+            )
+
+        data = ai.flashcards(
+            topic,
+            text,
+            document,
+            payload.get("count", 10),
+            language,
+            user
+        )
+        return {"flashcards": data}
+
+    return _ai_endpoint(run)
+
+
+@app.route("/api/ai/plan", methods=["POST"])
+def ai_plan():
+    def run(payload, document, language, user):
+        goal = _text(payload, "goal", 500)
+
+        if not goal:
+            raise ai.AIError(
+                "Spune-mi pentru ce examen sau obiectiv vrei planul.",
+                status=400
+            )
+
+        reply = ai.study_plan(
+            goal,
+            payload.get("days", 7),
+            payload.get("hours", 2),
+            _text(payload, "text", 60000),
+            document,
+            language,
+            user
+        )
+        return {"reply": reply}
+
+    return _ai_endpoint(run)
+
+
+@app.errorhandler(413)
+def too_large(error):
+    return jsonify({
+        "success": False,
+        "message": "Fișierele sunt prea mari (maxim 32 MB)."
+    }), 413
+
 
 if __name__ == "__main__":
     app.run(

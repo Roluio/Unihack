@@ -2,14 +2,18 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <link rel="icon" type="image/png" href="/static/img/logo-64.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>UniBuddy - Profil</title>
+    <title>StudyGram - Profil</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='profile.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='notifications.css') }}">
+    <script src="/static/theme.js"></script>
+    <link rel="stylesheet" href="/static/theme.css">
+    <link rel="stylesheet" href="/static/theme-dark.css">
 </head>
 
 <body>
@@ -19,8 +23,8 @@
     <aside class="sidebar">
 
         <div class="logo">
-            <div class="logo-icon">✦</div>
-            <span>UniBuddy</span>
+            <div class="logo-icon sg-logo-box"><img class="sg-logo" src="/static/img/logo.png" alt="StudyGram"></div>
+            <span>StudyGram</span>
         </div>
 
         <nav class="navigation">
@@ -257,6 +261,20 @@
                             <input type="text"
                                    id="inputFullName"
                                    value="{{ user.full_name }}"
+                                   maxlength="80"
+                                   required>
+                        </div>
+
+                        <div class="form-row">
+
+                            <label data-i18n="lblEmail">
+                                Email
+                            </label>
+
+                            <input type="email"
+                                   id="inputEmail"
+                                   value="{{ user.email }}"
+                                   maxlength="120"
                                    required>
                         </div>
 
@@ -298,6 +316,13 @@
                                     class="primary-button"
                                     data-i18n="saveChanges">
                                 Salvează
+                            </button>
+
+                            <button type="button"
+                                    id="cancelEditBtn"
+                                    class="secondary-button"
+                                    data-i18n="cancel">
+                                Anulează
                             </button>
 
                             <span id="editStatus"
@@ -367,12 +392,68 @@
                                     Email asociat
                                 </strong>
 
-                                <p>{{ user.email }}</p>
+                                <p id="displayEmail">{{ user.email }}</p>
                             </div>
 
                         </div>
 
                     </div>
+
+                    <span id="settingsStatus"
+                          class="status-text"></span>
+
+                    <h3 class="section-subtitle"
+                        data-i18n="passwordTitle">
+                        Schimbă parola
+                    </h3>
+
+                    <form id="passwordForm"
+                          class="clean-form">
+
+                        <div class="form-row">
+                            <label data-i18n="lblCurrentPassword">
+                                Parola actuală
+                            </label>
+                            <input type="password"
+                                   id="inputCurrentPassword"
+                                   autocomplete="current-password"
+                                   required>
+                        </div>
+
+                        <div class="form-row">
+                            <label data-i18n="lblNewPassword">
+                                Parola nouă
+                            </label>
+                            <input type="password"
+                                   id="inputNewPassword"
+                                   autocomplete="new-password"
+                                   minlength="4"
+                                   required>
+                        </div>
+
+                        <div class="form-row">
+                            <label data-i18n="lblConfirmPassword">
+                                Confirmă parola nouă
+                            </label>
+                            <input type="password"
+                                   id="inputConfirmPassword"
+                                   autocomplete="new-password"
+                                   minlength="4"
+                                   required>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="submit"
+                                    class="primary-button"
+                                    data-i18n="changePassword">
+                                Schimbă parola
+                            </button>
+
+                            <span id="passwordStatus"
+                                  class="status-text"></span>
+                        </div>
+
+                    </form>
 
                 </div>
 
@@ -473,17 +554,16 @@
 
 </div>
 
-<!-- UNIBUDDY AI -->
+<!-- BUDDY -->
 <button type="button"
         id="buddyBtn"
         class="ai-toggle buddy-floating">
-    ✦ BUDDY
+    <img class="sg-logo" src="/static/img/logo.png" alt="StudyGram">
 </button>
 
 <!-- PROFILE JAVASCRIPT -->
 <script src="{{ url_for('static', filename='profile.js') }}"></script>
 <script src="{{ url_for('static', filename='buddy-navigation.js') }}"></script>
-<script src="{{ url_for('static', filename='profile.js') }}"></script>
 <script src="{{ url_for('static', filename='lucide-nav.js') }}"></script>
 <script src="{{ url_for('static', filename='remove-search.js') }}"></script>
 <script src="{{ url_for('static', filename='notifications.js') }}"></script>

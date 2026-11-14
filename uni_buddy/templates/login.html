@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="/static/img/logo-64.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniBuddy - Log In</title>
+    <title>StudyGram - Log In</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+    <script src="/static/theme.js"></script>
+    <link rel="stylesheet" href="/static/theme.css">
+    <link rel="stylesheet" href="/static/theme-dark.css">
 </head>
 <body>
     <div class="glow glow-top"></div>
@@ -12,8 +16,8 @@
 
     <header class="top-bar">
         <div class="logo">
-            <div class="logo-icon">✦</div>
-            <span>UniBuddy</span>
+            <div class="logo-icon sg-logo-box"><img class="sg-logo" src="/static/img/logo.png" alt="StudyGram"></div>
+            <span>StudyGram</span>
         </div>
 
         <div class="language-dropdown" id="langDropdown">
@@ -94,7 +98,7 @@
         </div>
     </main>
 
-    <button type="button" id="buddyBtn" class="buddy-btn">✦ BUDDY</button>
+    <button type="button" id="buddyBtn" class="buddy-btn" title="Buddy" aria-label="Buddy"><img class="sg-logo" src="/static/img/logo.png" alt="StudyGram"></button>
 
     <script src="{{ url_for('static', filename='script1.js') }}"></script>
 </body>

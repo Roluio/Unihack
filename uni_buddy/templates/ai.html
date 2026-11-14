@@ -2,15 +2,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="/static/img/logo-64.png">
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
-    <title>UniBuddy AI</title>
+    <title>Buddy</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='ai.css') }}">
 
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/static/theme.js"></script>
+    <link rel="stylesheet" href="/static/theme.css">
+    <link rel="stylesheet" href="/static/theme-dark.css">
 </head>
 <body>
 
@@ -20,15 +24,13 @@
     <aside class="sidebar">
 
         <a href="/home" class="brand">
-            <div class="brand-logo">
-                <i data-lucide="sparkles"></i>
-            </div>
-            <span>UniBuddy</span>
+            <div class="brand-logo sg-logo-box"><img class="sg-logo" src="/static/img/logo.png" alt="StudyGram"></div>
+            <span>StudyGram</span>
         </a>
 
         <div class="ai-label">
             <i data-lucide="bot"></i>
-            UniBuddy AI
+            Buddy
         </div>
 
         <button id="newChatBtn" class="new-chat">
@@ -77,14 +79,17 @@
     <!-- MAIN CHAT -->
     <main class="main-area">
 
+        <div id="aiBanner" class="ai-banner hidden">
+            ⚠️ GEMINI_API_KEY is not configured on the server.
+            Add it to <code>uni_buddy/.env</code> (see README.md) and restart.
+        </div>
+
         <header class="topbar">
 
             <div class="topbar-title">
-                <div class="topbar-icon">
-                    <i data-lucide="sparkles"></i>
-                </div>
+                <div class="topbar-icon sg-logo-box"><img class="sg-logo" src="/static/img/logo.png" alt="StudyGram"></div>
                 <div>
-                    <h2>UniBuddy AI</h2>
+                    <h2>Buddy</h2>
                     <p>Your personal study assistant</p>
                 </div>
             </div>
@@ -109,9 +114,7 @@
 
             <div id="welcomeScreen" class="welcome">
 
-                <div class="welcome-logo">
-                    <i data-lucide="sparkles"></i>
-                </div>
+                <div class="welcome-logo sg-logo-box"><img class="sg-logo" src="/static/img/logo.png" alt="StudyGram"></div>
 
                 <h1 id="welcomeTitle">
                     How can I help you study?
@@ -163,6 +166,31 @@
         <!-- COMPOSER -->
         <div class="composer-section">
 
+            <div class="tool-tabs" id="toolTabs" role="tablist">
+                <button type="button" class="tool-tab active" data-mode="chat"><i data-lucide="message-circle"></i><span>Chat</span></button>
+                <button type="button" class="tool-tab" data-mode="summary"><i data-lucide="book-open-text"></i><span>Summary</span></button>
+                <button type="button" class="tool-tab" data-mode="quiz"><i data-lucide="clipboard-list"></i><span>Quiz</span></button>
+                <button type="button" class="tool-tab" data-mode="flashcards"><i data-lucide="layers"></i><span>Flashcards</span></button>
+                <button type="button" class="tool-tab" data-mode="plan"><i data-lucide="calendar-check"></i><span>Study plan</span></button>
+                <button type="button" class="tool-tab memory-tab" id="memoryToggle"><i data-lucide="folder-open"></i><span id="memoryLabel">My files</span></button>
+            </div>
+
+            <div class="memory-panel hidden" id="memoryPanel">
+                <div class="memory-head">
+                    <strong id="memoryTitle">Buddy's memory</strong>
+                    <button type="button" id="memoryRefresh" class="memory-refresh">Refresh</button>
+                </div>
+                <label class="memory-auto">
+                    <input type="checkbox" id="memoryAuto" checked>
+                    <span id="memoryAutoText">Let Buddy pick the files it needs on its own</span>
+                </label>
+                <input type="search" id="memorySearch" class="memory-search" placeholder="Search my files...">
+                <div class="memory-list" id="memoryList"></div>
+                <p class="memory-hint" id="memoryHint"></p>
+            </div>
+
+            <div class="tool-options hidden" id="toolOptions"></div>
+
             <div class="context-panel hidden" id="contextPanel">
                 <div class="context-heading">
                     <strong>
@@ -177,10 +205,20 @@
                     id="courseNotes"
                     placeholder="Paste your course notes here..."
                     maxlength="20000"
-                    rows="5"></textarea>
+                    rows="3"></textarea>
+                <div class="file-row">
+                    <label class="file-pick" for="docFile">
+                        <i data-lucide="paperclip"></i>
+                        <span id="docLabel">Attach PDF / image / TXT (max 15 MB)</span>
+                    </label>
+                    <input type="file" id="docFile" class="hidden"
+                           accept=".pdf,.txt,.md,.csv,.png,.jpg,.jpeg,.webp">
+                    <button type="button" id="docClear" class="file-clear hidden"
+                            title="Remove file"><i data-lucide="x"></i></button>
+                </div>
                 <p>
-                    These notes will be sent with your question
-                    to help the AI answer.
+                    Notes and the attached file are sent to Gemini
+                    with your request to help it answer.
                 </p>
             </div>
 
@@ -195,10 +233,9 @@
 
                 <textarea
                     id="messageInput"
-                    placeholder="Ask UniBuddy AI anything..."
+                    placeholder="Ask Buddy anything..."
                     rows="1"
-                    maxlength="4000"
-                    required></textarea>
+                    maxlength="4000"></textarea>
 
                 <button id="sendBtn"
                         class="send-btn"
@@ -210,7 +247,7 @@
             </form>
 
             <p class="composer-info" id="composerInfo">
-                UniBuddy AI can make mistakes.
+                Buddy can make mistakes.
                 Check important information.
             </p>
         </div>
@@ -221,6 +258,8 @@
 <script>
     window.UNIBUDDY_USERNAME = {{ username | tojson }};
 </script>
+<script src="{{ url_for('static', filename='markdown.js') }}"></script>
+<script src="{{ url_for('static', filename='memory.js') }}"></script>
 <script src="{{ url_for('static', filename='ai.js') }}"></script>
 
 </body>

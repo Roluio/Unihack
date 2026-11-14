@@ -1,6 +1,6 @@
 
 // ==========================================
-// UNIBUDDY AI - FRONTEND
+// BUDDY - FRONTEND
 // ==========================================
 
 const $ = id => document.getElementById(id);
@@ -12,31 +12,41 @@ const STORAGE_KEY = `UniBuddyAI_${username}`;
 let chats = [];
 let activeChatId = null;
 let isLoading = false;
+let mode = "chat";
+let docFile = null;
 
 const translations = {
     ro: {
         title: "Cu ce te pot ajuta să înveți?",
         description: "Întreabă orice, înțelege concepte dificile, rezumă notițe sau pregătește-te pentru examene.",
-        placeholder: "Întreabă UniBuddy AI...",
+        placeholder: "Întreabă-l pe Buddy...",
         explain: "Explică un subiect",
         summary: "Rezumă notițe",
         quiz: "Generează un test",
         plan: "Plan de învățare",
-        thinking: "UniBuddy AI se gândește...",
+        thinking: "Buddy se gândește...",
         error: "Nu am putut obține un răspuns.",
-        noKey: "Cheia API nu este configurată pe server."
+        noKey: "Cheia API nu este configurată pe server.",
+        topicPlaceholder: "Despre ce temă? (sau folosește notițe / fișier)",
+        goalPlaceholder: "Pentru ce examen sau obiectiv?",
+        summaryPlaceholder: "Opțional: ce să accentuez? (folosește notițe sau fișier)",
+        needInput: "Scrie ceva, adaugă notițe sau atașează un fișier."
     },
     en: {
         title: "How can I help you study?",
         description: "Ask anything, understand difficult topics, summarize notes or prepare for exams.",
-        placeholder: "Ask UniBuddy AI anything...",
+        placeholder: "Ask Buddy anything...",
         explain: "Explain a topic",
         summary: "Summarize notes",
         quiz: "Generate a quiz",
         plan: "Study plan",
-        thinking: "UniBuddy AI is thinking...",
-        error: "Could not get an AI response.",
-        noKey: "The server API key is not configured."
+        thinking: "Buddy is thinking...",
+        error: "Buddy could not answer.",
+        noKey: "The server API key is not configured.",
+        topicPlaceholder: "What topic? (or use notes / a file)",
+        goalPlaceholder: "Which exam or goal?",
+        summaryPlaceholder: "Optional: what to focus on? (use notes or a file)",
+        needInput: "Type something, add notes or attach a file."
     }
 };
 
@@ -163,13 +173,138 @@ function updateLanguage() {
 
     $("welcomeTitle").textContent = dict.title;
     $("welcomeDescription").textContent = dict.description;
-    $("messageInput").placeholder = dict.placeholder;
 
     const actions = ["explain", "summary", "quiz", "plan"];
 
     document.querySelectorAll(".action-card").forEach((card, index) => {
         card.querySelector("strong").textContent = dict[actions[index]];
     });
+}
+
+// ------------------------------------------------------------
+// Interactive quiz
+// ------------------------------------------------------------
+
+function buildQuiz(data, message) {
+    const wrap = document.createElement("div");
+    wrap.className = "quiz";
+
+    const title = document.createElement("h4");
+    title.textContent = data.title;
+    wrap.appendChild(title);
+
+    const state = message.quizState || (message.quizState = {});
+    const score = document.createElement("div");
+    score.className = "quiz-score";
+
+    const updateScore = () => {
+        const answered = Object.keys(state).length;
+        const correct = data.questions.filter((q, i) => state[i] === q.answer_index).length;
+        score.textContent = answered === data.questions.length
+            ? `Score: ${correct} / ${data.questions.length}`
+            : `${answered} / ${data.questions.length}`;
+    };
+
+    data.questions.forEach((q, qi) => {
+        const card = document.createElement("div");
+        card.className = "quiz-q";
+
+        const text = document.createElement("p");
+        text.className = "quiz-question";
+        text.textContent = `${qi + 1}. ${q.question}`;
+        card.appendChild(text);
+
+        const explain = document.createElement("div");
+        explain.className = "quiz-explain hidden";
+        explain.textContent = q.explanation;
+
+        const buttons = [];
+
+        const reveal = chosen => {
+            buttons.forEach((b, i) => {
+                b.disabled = true;
+                if (i === q.answer_index) b.classList.add("correct");
+                else if (i === chosen) b.classList.add("wrong");
+            });
+            explain.classList.remove("hidden");
+        };
+
+        q.options.forEach((option, oi) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "quiz-option";
+            btn.textContent = option;
+            btn.addEventListener("click", () => {
+                state[qi] = oi;
+                reveal(oi);
+                updateScore();
+                saveChats();
+            });
+            buttons.push(btn);
+            card.appendChild(btn);
+        });
+
+        card.appendChild(explain);
+        wrap.appendChild(card);
+
+        if (state[qi] !== undefined) reveal(state[qi]);
+    });
+
+    updateScore();
+    wrap.appendChild(score);
+    return wrap;
+}
+
+// ------------------------------------------------------------
+// Flashcards (flip cards)
+// ------------------------------------------------------------
+
+function buildFlashcards(data) {
+    const wrap = document.createElement("div");
+    wrap.className = "flashcards";
+
+    const title = document.createElement("h4");
+    title.textContent = `${data.title} · ${data.cards.length}`;
+    wrap.appendChild(title);
+
+    const grid = document.createElement("div");
+    grid.className = "flash-grid";
+
+    data.cards.forEach(card => {
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "flash-card";
+        el.title = "Click to flip";
+
+        const front = document.createElement("div");
+        front.className = "flash-face front";
+        front.textContent = card.front;
+
+        const back = document.createElement("div");
+        back.className = "flash-face back";
+        back.textContent = card.back;
+
+        el.append(front, back);
+        el.addEventListener("click", () => el.classList.toggle("flipped"));
+        grid.appendChild(el);
+    });
+
+    wrap.appendChild(grid);
+    return wrap;
+}
+
+function messagePlainText(message) {
+    if (message.kind === "quiz") {
+        return message.data.questions
+            .map((q, i) => `${i + 1}. ${q.question}\n` +
+                q.options.map((o, j) => `   ${"ABCD"[j]}) ${o}`).join("\n") +
+                `\n   Answer: ${"ABCD"[q.answer_index]}`)
+            .join("\n\n");
+    }
+    if (message.kind === "flashcards") {
+        return message.data.cards.map(c => `${c.front} — ${c.back}`).join("\n");
+    }
+    return message.text;
 }
 
 function addMessageElement(message) {
@@ -183,13 +318,25 @@ function addMessageElement(message) {
 
     const name = document.createElement("div");
     name.className = "message-name";
-    name.textContent = message.role === "user" ? "You" : "UniBuddy AI";
+    name.textContent = message.role === "user" ? "You" : "Buddy";
 
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
 
-    // textContent prevents injected HTML from executing.
-    bubble.textContent = message.text;
+    if (message.role === "user") {
+        // textContent prevents injected HTML from executing.
+        bubble.textContent = message.text;
+    } else if (message.kind === "quiz") {
+        bubble.classList.add("rich");
+        bubble.appendChild(buildQuiz(message.data, message));
+    } else if (message.kind === "flashcards") {
+        bubble.classList.add("rich");
+        bubble.appendChild(buildFlashcards(message.data));
+    } else {
+        bubble.classList.add("md");
+        // renderMarkdown escapes all HTML before formatting.
+        bubble.innerHTML = renderMarkdown(message.text);
+    }
 
     content.append(name, bubble);
 
@@ -197,14 +344,33 @@ function addMessageElement(message) {
         const avatar = document.createElement("div");
         avatar.className = "message-avatar";
 
-        const icon = document.createElement("i");
-        icon.setAttribute("data-lucide", "sparkles");
+        const icon = document.createElement("img");
+        icon.className = "sg-logo";
+        icon.alt = "StudyGram";
+        icon.src = "/static/img/logo.png";
         avatar.appendChild(icon);
 
         row.appendChild(avatar);
     }
 
     row.appendChild(content);
+
+    if (message.role === "assistant" && Array.isArray(message.used) && message.used.length) {
+        const used = document.createElement("div");
+        used.className = "used-files";
+
+        const label = document.createElement("span");
+        label.textContent = memText().used;
+        used.appendChild(label);
+
+        message.used.forEach(name => {
+            const chip = document.createElement("em");
+            chip.textContent = name;
+            used.appendChild(chip);
+        });
+
+        content.appendChild(used);
+    }
 
     if (message.role === "assistant") {
         const actions = document.createElement("div");
@@ -220,7 +386,7 @@ function addMessageElement(message) {
 
         copyBtn.addEventListener("click", async () => {
             try {
-                await navigator.clipboard.writeText(message.text);
+                await navigator.clipboard.writeText(messagePlainText(message));
                 copyBtn.textContent = "Copied!";
             } catch {
                 copyBtn.textContent = "Copy failed";
@@ -280,8 +446,10 @@ function showTemporaryMessage(text, isError = false) {
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";
 
-    const icon = document.createElement("i");
-    icon.setAttribute("data-lucide", "sparkles");
+    const icon = document.createElement("img");
+    icon.className = "sg-logo";
+    icon.alt = "StudyGram";
+    icon.src = "/static/img/logo.png";
     avatar.appendChild(icon);
 
     const content = document.createElement("div");
@@ -304,14 +472,287 @@ function showTemporaryMessage(text, isError = false) {
     return row;
 }
 
+
+// ------------------------------------------------------------
+// Student memory: the AI can see the student's saved files
+// ------------------------------------------------------------
+
+const MEMORY_KEY = `StudyGramAIMemory_${username}`;
+let memoryState = { auto: true, pinned: [] };
+
+try {
+    const saved = JSON.parse(localStorage.getItem(MEMORY_KEY) || "null");
+    if (saved && typeof saved === "object") {
+        memoryState = {
+            auto: saved.auto !== false,
+            pinned: Array.isArray(saved.pinned) ? saved.pinned : []
+        };
+    }
+} catch { /* ignore corrupted state */ }
+
+function saveMemoryState() {
+    try { localStorage.setItem(MEMORY_KEY, JSON.stringify(memoryState)); } catch { /* ignore */ }
+}
+
+const MEMORY_TEXT = {
+    ro: {
+        title: "Memoria lui Buddy",
+        auto: "Lasă-l pe Buddy să aleagă singur fișierele de care are nevoie",
+        refresh: "Reîmprospătează",
+        search: "Caută în fișierele mele...",
+        empty: "Nu ai fișiere încă. Încarcă materiale în Library sau atașează fișiere la o postare, iar Buddy le va vedea aici.",
+        unsupported: "format nesuportat",
+        hint: "Bifează un fișier ca să fie mereu trimis lui Buddy. Fără bifă, Buddy alege singur, doar când întrebarea o cere.",
+        label: "Fișierele mele",
+        looking: "Caut în fișierele tale...",
+        used: "Fișiere folosite:",
+        library: "Library",
+        forum: "Forum"
+    },
+    en: {
+        title: "Buddy's memory",
+        auto: "Let Buddy pick the files it needs on its own",
+        refresh: "Refresh",
+        search: "Search my files...",
+        empty: "No files yet. Upload materials in Library or attach files to a post and Buddy will see them here.",
+        unsupported: "unsupported format",
+        hint: "Tick a file to always send it to Buddy. Without a tick, Buddy picks files itself, only when your question needs them.",
+        label: "My files",
+        looking: "Looking through your files...",
+        used: "Files used:",
+        library: "Library",
+        forum: "Forum"
+    }
+};
+
+const memText = () => MEMORY_TEXT[getLanguage()] || MEMORY_TEXT.ro;
+
+function formatSize(bytes) {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function renderMemory() {
+    const t = memText();
+    const items = window.StudyGramMemory ? window.StudyGramMemory.items() : [];
+    const query = ($("memorySearch").value || "").trim().toLowerCase();
+
+    $("memoryLabel").textContent =
+        `${t.label}${items.length ? ` (${items.length})` : ""}`;
+    $("memoryTitle").textContent = t.title;
+    $("memoryAutoText").textContent = t.auto;
+    $("memoryRefresh").textContent = t.refresh;
+    $("memorySearch").placeholder = t.search;
+    $("memoryHint").textContent = t.hint;
+    $("memoryAuto").checked = memoryState.auto;
+
+    const list = $("memoryList");
+    list.replaceChildren();
+
+    const shown = items.filter(item =>
+        !query || item.name.toLowerCase().includes(query) ||
+        (item.folder || "").toLowerCase().includes(query)
+    );
+
+    if (!shown.length) {
+        const empty = document.createElement("p");
+        empty.className = "memory-empty";
+        empty.textContent = t.empty;
+        list.appendChild(empty);
+        return;
+    }
+
+    shown.forEach(item => {
+        const row = document.createElement("label");
+        row.className = "memory-item" + (item.supported ? "" : " disabled");
+
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.disabled = !item.supported;
+        box.checked = memoryState.pinned.includes(item.key);
+        box.addEventListener("change", () => {
+            memoryState.pinned = memoryState.pinned.filter(k => k !== item.key);
+            if (box.checked) memoryState.pinned.push(item.key);
+            saveMemoryState();
+        });
+
+        const info = document.createElement("span");
+        info.className = "memory-info";
+
+        const name = document.createElement("strong");
+        name.textContent = item.name;
+
+        const meta = document.createElement("small");
+        const where = item.source === "library" ? t.library : t.forum;
+        meta.textContent = [
+            where + (item.folder && item.source === "library" ? ` / ${item.folder}` : ""),
+            formatSize(item.size),
+            item.supported ? "" : t.unsupported
+        ].filter(Boolean).join(" · ");
+
+        info.append(name, meta);
+        row.append(box, info);
+        list.appendChild(row);
+    });
+}
+
+async function refreshMemory() {
+    if (!window.StudyGramMemory) return;
+    await window.StudyGramMemory.scan(username);
+    // drop pins of files that no longer exist
+    const keys = new Set(window.StudyGramMemory.items().map(i => i.key));
+    memoryState.pinned = memoryState.pinned.filter(k => keys.has(k));
+    saveMemoryState();
+    renderMemory();
+}
+
+// Decide which files go with this request (pinned + AI-selected).
+async function resolveMemoryFiles(requestMode, messageText, notes, history, language, thinkingRow) {
+    const memory = window.StudyGramMemory;
+    if (!memory) return [];
+
+    let keys = memoryState.pinned.slice();
+    const catalog = memory.catalog();
+    const usable = catalog.some(item => item.supported);
+
+    const needsRouting =
+        memoryState.auto && usable && !docFile && keys.length < 3 &&
+        messageText && (requestMode === "chat" || !notes);
+
+    if (needsRouting) {
+        const bubble = thinkingRow.querySelector(".message-bubble");
+        if (bubble) bubble.textContent = memText().looking;
+
+        try {
+            const response = await fetch("/api/ai/route", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: messageText,
+                    history: history.slice(-4),
+                    catalog,
+                    language
+                })
+            });
+            const data = await response.json();
+            if (response.ok && data.success) {
+                data.files.forEach(key => { if (!keys.includes(key)) keys.push(key); });
+            }
+        } catch { /* routing is optional: continue without it */ }
+
+        if (bubble) bubble.textContent = translations[language].thinking;
+    }
+
+    return memory.filesFor(keys, username);
+}
+
+const MODE_ENDPOINTS = {
+    chat: "/api/ai/chat",
+    summary: "/api/ai/summarize",
+    quiz: "/api/ai/quiz",
+    flashcards: "/api/ai/flashcards",
+    plan: "/api/ai/plan"
+};
+
+const MODE_LABELS = {
+    ro: { chat: "Chat", summary: "Rezumat", quiz: "Test", flashcards: "Flashcards", plan: "Plan de studiu" },
+    en: { chat: "Chat", summary: "Summary", quiz: "Quiz", flashcards: "Flashcards", plan: "Study plan" }
+};
+
+function optionValue(id, fallback) {
+    const el = $(id);
+    return el ? el.value : fallback;
+}
+
+function buildToolOptions() {
+    const box = $("toolOptions");
+    box.replaceChildren();
+
+    const field = (label, id, html) => {
+        const wrap = document.createElement("label");
+        wrap.className = "opt";
+        const span = document.createElement("span");
+        span.textContent = label;
+        wrap.appendChild(span);
+        wrap.insertAdjacentHTML("beforeend", html);
+        wrap.querySelector("select,input").id = id;
+        box.appendChild(wrap);
+    };
+
+    if (mode === "summary") {
+        field("Style", "optStyle",
+            '<select><option value="detailed">Detailed</option><option value="short">Short</option>' +
+            '<option value="paper">Research paper</option><option value="eli5">Explain simply</option></select>');
+    } else if (mode === "quiz") {
+        field("Questions", "optCount",
+            '<select><option>5</option><option>8</option><option>10</option><option>15</option></select>');
+        field("Difficulty", "optDifficulty",
+            '<select><option value="easy">Easy</option><option value="medium" selected>Medium</option>' +
+            '<option value="hard">Hard</option></select>');
+    } else if (mode === "flashcards") {
+        field("Cards", "optCount",
+            '<select><option>8</option><option selected>10</option><option>15</option><option>20</option></select>');
+    } else if (mode === "plan") {
+        field("Days", "optDays", '<input type="number" min="1" max="60" value="7">');
+        field("Hours / day", "optHours", '<input type="number" min="0.5" max="12" step="0.5" value="2">');
+    }
+
+    box.classList.toggle("hidden", mode === "chat");
+}
+
+function setMode(next) {
+    mode = next;
+
+    document.querySelectorAll(".tool-tab[data-mode]").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.mode === mode);
+    });
+
+    buildToolOptions();
+
+    const dict = translations[getLanguage()];
+    const placeholders = {
+        chat: dict.placeholder,
+        summary: dict.summaryPlaceholder,
+        quiz: dict.topicPlaceholder,
+        flashcards: dict.topicPlaceholder,
+        plan: dict.goalPlaceholder
+    };
+    $("messageInput").placeholder = placeholders[mode];
+
+    // tools that work from material open the notes/file panel
+    if (mode === "summary") {
+        $("contextPanel").classList.remove("hidden");
+    }
+
+    iconRefresh();
+}
+
+function describeRequest(text, notes) {
+    const label = MODE_LABELS[getLanguage()][mode];
+    const bits = [];
+    if (docFile) bits.push(`📎 ${docFile.name}`);
+    else if (notes) bits.push("📝 notes");
+    const extra = bits.length ? ` (${bits.join(", ")})` : "";
+    return mode === "chat" ? text : `[${label}] ${text || "—"}${extra}`;
+}
+
 async function sendMessage(event) {
     if (event) event.preventDefault();
     if (isLoading) return;
 
     const input = $("messageInput");
     const messageText = input.value.trim();
+    const notes = $("courseNotes").value.trim();
+    const language = getLanguage();
 
-    if (!messageText) return;
+    // chat always needs a message; the other tools can work from notes/file/topic
+    if (!messageText && (mode === "chat" || mode === "plan" ||
+        (!notes && !docFile))) {
+        showTemporaryMessage(translations[language].needInput, true);
+        return;
+    }
 
     if (!activeChatId) createChat();
 
@@ -322,19 +763,16 @@ async function sendMessage(event) {
         .slice(-12)
         .map(message => ({
             role: message.role,
-            content: message.text
+            content: messagePlainText(message)
         }));
 
-    const notes = $("courseNotes").value.trim();
-    const language = getLanguage();
+    const requestMode = mode;
+    const shownText = describeRequest(messageText, notes);
 
-    chat.messages.push({
-        role: "user",
-        text: messageText
-    });
+    chat.messages.push({ role: "user", text: shownText });
 
     if (chat.title === "New Chat") {
-        chat.title = messageText.slice(0, 38);
+        chat.title = (messageText || shownText).slice(0, 38);
     }
 
     input.value = "";
@@ -349,26 +787,74 @@ async function sendMessage(event) {
         translations[language].thinking
     );
 
-    try {
-        const response = await fetch("/api/ai/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: messageText,
-                language,
-                notes,
-                history
-            })
-        });
+    // Build request: multipart when a file is attached, JSON otherwise.
+    const fields = { language, notes };
 
-        const data = await response.json();
+    if (requestMode === "chat") {
+        fields.message = messageText;
+        fields.history = history;
+    } else if (requestMode === "summary") {
+        fields.text = [notes, messageText].filter(Boolean).join("\n\n");
+        fields.style = optionValue("optStyle", "detailed");
+    } else if (requestMode === "quiz") {
+        fields.topic = messageText;
+        fields.text = notes;
+        fields.count = optionValue("optCount", 5);
+        fields.difficulty = optionValue("optDifficulty", "medium");
+    } else if (requestMode === "flashcards") {
+        fields.topic = messageText;
+        fields.text = notes;
+        fields.count = optionValue("optCount", 10);
+    } else if (requestMode === "plan") {
+        fields.goal = messageText;
+        fields.text = notes;
+        fields.days = optionValue("optDays", 7);
+        fields.hours = optionValue("optHours", 2);
+    }
+
+    let memoryFiles = [];
+
+    try {
+        memoryFiles = await resolveMemoryFiles(
+            requestMode, messageText, notes, history, language, thinkingRow
+        );
+    } catch (error) {
+        console.error("Memory step skipped:", error);
+    }
+
+    if (requestMode === "chat") {
+        // the AI always knows WHICH files the student has (names only)
+        fields.catalog = window.StudyGramMemory ? window.StudyGramMemory.catalog() : [];
+    }
+
+    const attachments = docFile ? [docFile, ...memoryFiles] : memoryFiles;
+    const usedNames = attachments.map(file => file.name);
+
+    let fetchOptions;
+
+    if (attachments.length) {
+        const form = new FormData();
+        for (const [key, value] of Object.entries(fields)) {
+            form.append(key, typeof value === "object" ? JSON.stringify(value) : value);
+        }
+        attachments.slice(0, 4).forEach(file => form.append("file", file, file.name));
+        fetchOptions = { method: "POST", body: form };
+    } else {
+        fetchOptions = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields)
+        };
+    }
+
+    try {
+        const response = await fetch(MODE_ENDPOINTS[requestMode], fetchOptions);
+
+        let data = {};
+        try { data = await response.json(); } catch { /* non-JSON error */ }
 
         if (!response.ok || !data.success) {
-            throw new Error(
-                data.message || translations[language].error
-            );
+            throw new Error(data.message || translations[language].error);
         }
 
         thinkingRow.remove();
@@ -376,10 +862,13 @@ async function sendMessage(event) {
         const targetChat = chats.find(c => c.id === chatId);
 
         if (targetChat) {
-            targetChat.messages.push({
-                role: "assistant",
-                text: data.reply
-            });
+            if (requestMode === "quiz") {
+                targetChat.messages.push({ role: "assistant", kind: "quiz", data: data.quiz, used: usedNames });
+            } else if (requestMode === "flashcards") {
+                targetChat.messages.push({ role: "assistant", kind: "flashcards", data: data.flashcards, used: usedNames });
+            } else {
+                targetChat.messages.push({ role: "assistant", text: data.reply, used: usedNames });
+            }
         }
 
         saveChats();
@@ -399,27 +888,17 @@ async function sendMessage(event) {
 function useQuickAction(action) {
     const lang = getLanguage();
 
-    const prompts = {
-        ro: {
-            explain: "Explică-mi pe înțelesul unui student următorul subiect: ",
-            summary: "Fă un rezumat structurat al notițelor pe care le-am adăugat. Dacă nu am adăugat notițe, cere-mi să le introduc.",
-            quiz: "Creează un test cu 5 întrebări grilă din notițele mele și pune răspunsurile corecte la final. Dacă nu am notițe, întreabă-mă ce materie vreau să exersez.",
-            plan: "Ajută-mă să fac un plan de învățare. Întreabă-mă ce examen am și câte zile mai am."
-        },
-        en: {
-            explain: "Explain this topic in simple student-friendly terms: ",
-            summary: "Create a structured summary of my course notes. If no notes are provided, ask me to add them.",
-            quiz: "Create a 5-question multiple-choice quiz from my notes, with answers at the end. If I have no notes, ask which subject I want to practice.",
-            plan: "Help me create a study plan. Ask which exam I have and how many days remain."
-        }
-    };
-
-    $("messageInput").value = prompts[lang][action];
-    $("messageInput").focus();
-
-    if (action === "summary" || action === "quiz") {
-        $("contextPanel").classList.remove("hidden");
+    if (action === "explain") {
+        setMode("chat");
+        $("messageInput").value = lang === "ro"
+            ? "Explică-mi pe înțelesul unui student următorul subiect: "
+            : "Explain this topic in simple student-friendly terms: ";
+        $("messageInput").focus();
+        return;
     }
+
+    setMode(action);   // summary | quiz | plan
+    $("messageInput").focus();
 }
 
 function setupEvents() {
@@ -455,7 +934,53 @@ function setupEvents() {
         $("contextPanel").classList.add("hidden");
     });
 
-    $("languageSelect").addEventListener("change", updateLanguage);
+    $("languageSelect").addEventListener("change", () => {
+        localStorage.setItem("UniBuddyForumLanguage", $("languageSelect").value);
+        updateLanguage();
+        setMode(mode);
+        renderMemory();
+    });
+
+    document.querySelectorAll(".tool-tab[data-mode]").forEach(tab => {
+        tab.addEventListener("click", () => setMode(tab.dataset.mode));
+    });
+
+    $("memoryToggle").addEventListener("click", () => {
+        $("memoryPanel").classList.toggle("hidden");
+        $("memoryToggle").classList.toggle("active", !$("memoryPanel").classList.contains("hidden"));
+        if (!$("memoryPanel").classList.contains("hidden")) refreshMemory();
+    });
+
+    $("memoryAuto").addEventListener("change", event => {
+        memoryState.auto = event.target.checked;
+        saveMemoryState();
+    });
+
+    $("memoryRefresh").addEventListener("click", refreshMemory);
+    $("memorySearch").addEventListener("input", renderMemory);
+
+    $("docFile").addEventListener("change", event => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.size > 15 * 1024 * 1024) {
+            alert("File too large (max 15 MB).");
+            event.target.value = "";
+            return;
+        }
+
+        docFile = file;
+        $("docLabel").textContent = file.name;
+        $("docClear").classList.remove("hidden");
+        $("contextPanel").classList.remove("hidden");
+    });
+
+    $("docClear").addEventListener("click", () => {
+        docFile = null;
+        $("docFile").value = "";
+        $("docLabel").textContent = "Attach PDF / image / TXT (max 15 MB)";
+        $("docClear").classList.add("hidden");
+    });
 
     document.querySelectorAll(".action-card").forEach(card => {
         card.addEventListener("click", () => {
@@ -471,13 +996,28 @@ function initialize() {
         activeChatId = chats[0].id;
     }
 
-    $("languageSelect").value = "ro";
+    $("languageSelect").value =
+        localStorage.getItem("UniBuddyForumLanguage") === "en" ? "en" : "ro";
 
     setupEvents();
     updateLanguage();
+    setMode("chat");
     renderHistory();
     renderChat();
     iconRefresh();
+    checkStatus();
+    refreshMemory();
+}
+
+async function checkStatus() {
+    try {
+        const response = await fetch("/api/ai/status");
+        const data = await response.json();
+
+        if (data.success && !data.configured) {
+            $("aiBanner").classList.remove("hidden");
+        }
+    } catch { /* offline: ignore */ }
 }
 
 initialize();

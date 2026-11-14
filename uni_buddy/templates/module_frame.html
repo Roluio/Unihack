@@ -2,11 +2,12 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <link rel="icon" type="image/png" href="/static/img/logo-64.png">
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>UniBuddy | {{ module_title }}</title>
+    <title>StudyGram | {{ module_title }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect"
@@ -47,7 +48,7 @@
             overflow: hidden;
         }
 
-        /* UNIBUDDY NAVIGATION */
+        /* STUDYGRAM NAVIGATION */
 
         .global-header {
             flex-shrink: 0;
@@ -250,6 +251,9 @@
             }
         }
     </style>
+    <script src="/static/theme.js"></script>
+    <link rel="stylesheet" href="/static/theme.css">
+    <link rel="stylesheet" href="/static/theme-dark.css">
 </head>
 
 <body>
@@ -260,10 +264,8 @@
     <header class="global-header">
 
         <a href="/home" class="brand">
-            <div class="brand-icon">
-                <i data-lucide="sparkles"></i>
-            </div>
-            <span>UniBuddy</span>
+            <div class="brand-icon sg-logo-box"><img class="sg-logo" src="/static/img/logo.png" alt="StudyGram"></div>
+            <span>StudyGram</span>
         </a>
 
         <nav class="global-nav">
@@ -338,6 +340,40 @@
 
 <script>
     lucide.createIcons();
+
+    // Translate the top navigation using the saved language.
+    (function () {
+        let lang = "ro";
+        try {
+            lang = localStorage.getItem("UniBuddyForumLanguage") === "en" ? "en" : "ro";
+        } catch (e) { /* ignore */ }
+
+        const labels = {
+            ro: {
+                "/home": "Acasă", "/profile": "Profil", "/library": "Bibliotecă",
+                "/messages": "Mesaje", "/friends": "Prieteni", "/notifications": "Notificări",
+                logout: "Ieșire"
+            },
+            en: {
+                "/home": "Home", "/profile": "Profile", "/library": "Library",
+                "/messages": "Messages", "/friends": "Friends", "/notifications": "Notifications",
+                logout: "Log out"
+            }
+        }[lang];
+
+        document.documentElement.lang = lang;
+
+        document.querySelectorAll(".global-nav a").forEach(link => {
+            const text = labels[link.getAttribute("href")];
+            if (!text) return;
+            const textNode = [...link.childNodes].reverse()
+                .find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+            if (textNode) textNode.textContent = " " + text + " ";
+        });
+
+        const logout = document.querySelector(".logout-button");
+        if (logout) logout.textContent = labels.logout;
+    })();
 
     const moduleFrame = document.getElementById("moduleFrame");
 

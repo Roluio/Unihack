@@ -1,6 +1,6 @@
 
 /*
- * UniBuddy - Remove Search from sidebar
+ * StudyGram - Remove Search from sidebar
  * Works with Romanian and English menus
  */
 

@@ -34,7 +34,7 @@ const demoConversations = [
             {
                 id: "demo-2",
                 sender: "Student",
-                text: "Yes, I uploaded them to UniBuddy!",
+                text: "Yes, I uploaded them to StudyGram!",
                 time: Date.now() - 1200000,
                 mine: true
             }
@@ -880,7 +880,7 @@ function openProfile() {
 
     $("profileName").textContent = conversation.name;
     $("profileSubtitle").textContent =
-        isGroup ? "Study Group" : "UniBuddy Member";
+        isGroup ? "Study Group" : "StudyGram Member";
 
     const avatar = $("profileAvatar");
     avatar.replaceChildren();
@@ -963,7 +963,7 @@ function openProfile() {
 
     } else {
         $("profileAbout").textContent =
-            "Student on UniBuddy. Study together, share materials and stay connected.";
+            "Student on StudyGram. Study together, share materials and stay connected.";
 
         setProfileSectionTitle("Groups in Common");
 

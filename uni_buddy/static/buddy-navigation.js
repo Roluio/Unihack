@@ -1,7 +1,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    // Find the UniBuddy AI button
+    // Find the Buddy button
     const buddyButton = document.getElementById("buddyBtn");
 
     if (buddyButton) {

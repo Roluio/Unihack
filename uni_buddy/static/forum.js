@@ -1,7 +1,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
-    // UNIBUDDY FORUM - COMPLETE VERSION
+    // STUDYGRAM FORUM - COMPLETE VERSION
     // ==========================================
 
     const $ = id => document.getElementById(id);
@@ -45,13 +45,13 @@ document.addEventListener("DOMContentLoaded", () => {
             recent: "Cele mai recente",
             popular: "Cele mai populare",
             feed: "Discuții din comunitate",
-            welcome: "Bine ai venit pe UniBuddy!",
+            welcome: "Bine ai venit pe StudyGram!",
             welcomeText: "Un spațiu unde studenții pot discuta, colabora și se pot ajuta reciproc.",
             popularSubjects: "Materii populare",
             noSubjects: "Nu există încă materii.",
             aiTitle: "Ai nevoie de ajutor?",
-            aiText: "Folosește UniBuddy AI pentru explicații și rezumate.",
-            aiOpen: "Deschide UniBuddy AI",
+            aiText: "Folosește Buddy pentru explicații și rezumate.",
+            aiOpen: "Deschide Buddy",
             modal: "Creează o postare",
             titleLabel: "Titlu",
             titlePlaceholder: "Despre ce ai vrea să discuți?",
@@ -101,13 +101,13 @@ document.addEventListener("DOMContentLoaded", () => {
             recent: "Most recent",
             popular: "Most popular",
             feed: "Community Feed",
-            welcome: "Welcome to UniBuddy!",
+            welcome: "Welcome to StudyGram!",
             welcomeText: "A space for students to discuss, collaborate and help each other.",
             popularSubjects: "Popular Subjects",
             noSubjects: "No subjects yet.",
             aiTitle: "Need extra help?",
-            aiText: "Use UniBuddy AI for explanations and summaries.",
-            aiOpen: "Open UniBuddy AI",
+            aiText: "Use Buddy for explanations and summaries.",
+            aiOpen: "Open Buddy",
             modal: "Create a Post",
             titleLabel: "Title",
             titlePlaceholder: "What would you like to discuss?",

@@ -1,118 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Activare tab din URL hash dacă venim din /home (ex: /profile#messages)
-    const hashTab = window.location.hash.replace('#', '');
-    if (hashTab && document.getElementById(`tab-${hashTab}`)) {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        const activeBtn = document.querySelector(`.nav-item[data-tab="${hashTab}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
-        document.getElementById(`tab-${hashTab}`).classList.add('active');
-    }
+    const LANG_KEY = 'UniBuddyForumLanguage';
+    const $ = (id) => document.getElementById(id);
 
-    // 2. Navigare între tab-urile de pe pagina de profil
-    const navItems = document.querySelectorAll('button.nav-item[data-tab]');
-    const tabPanels = document.querySelectorAll('.tab-panel');
-
-    navItems.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetTab = btn.getAttribute('data-tab');
-
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            tabPanels.forEach(panel => panel.classList.remove('active'));
-
-            btn.classList.add('active');
-            document.getElementById(`tab-${targetTab}`).classList.add('active');
-        });
-    });
-
-    // 3. Editare profil & Setări (rulăm doar dacă elementele există pe pagina curentă)
-    const toggleEditBtn = document.getElementById('toggleEditBtn');
-    const toggleSettingsBtn = document.getElementById('toggleSettingsBtn');
-    const editProfilePanel = document.getElementById('editProfilePanel');
-    const settingsPanel = document.getElementById('settingsPanel');
-
-    if (toggleEditBtn && toggleSettingsBtn) {
-        toggleEditBtn.addEventListener('click', () => {
-            settingsPanel.classList.add('hidden');
-            editProfilePanel.classList.toggle('hidden');
-        });
-
-        toggleSettingsBtn.addEventListener('click', () => {
-            editProfilePanel.classList.add('hidden');
-            settingsPanel.classList.toggle('hidden');
-        });
-    }
-
-    const editProfileForm = document.getElementById('editProfileForm');
-    const editStatus = document.getElementById('editStatus');
-
-    if (editProfileForm) {
-        editProfileForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const full_name = document.getElementById('inputFullName').value;
-            const faculty = document.getElementById('inputFaculty').value;
-            const year = document.getElementById('inputYear').value;
-            const bio = document.getElementById('inputBio').value;
-
-            const response = await fetch('/api/profile/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ full_name, faculty, year, bio })
-            });
-            const result = await response.json();
-
-            if (result.success) {
-                document.getElementById('displayFullName').textContent = result.user.full_name;
-                
-                const facultyLine = document.getElementById('facultyLine');
-                const displayFaculty = document.getElementById('displayFaculty');
-                const displayYear = document.getElementById('displayYear');
-                const facultySeparator = document.getElementById('facultySeparator');
-
-                displayFaculty.textContent = result.user.faculty;
-                displayYear.textContent = result.user.year;
-                facultySeparator.textContent = (result.user.faculty && result.user.year) ? ' • ' : '';
-                facultyLine.style.display = (result.user.faculty || result.user.year) ? 'block' : 'none';
-
-                const displayBio = document.getElementById('displayBio');
-                displayBio.textContent = result.user.bio;
-                displayBio.style.display = result.user.bio ? 'block' : 'none';
-
-                editStatus.textContent = currentLang === 'ro' ? 'Profil actualizat!' : 'Profile updated!';
-                setTimeout(() => { editStatus.textContent = ''; }, 2500);
-            }
-        });
-    }
-
-    const chkPrivateAccount = document.getElementById('chkPrivateAccount');
-    const chkEmailNotif = document.getElementById('chkEmailNotif');
-
-    if (chkPrivateAccount) {
-        chkPrivateAccount.addEventListener('change', async () => {
-            await fetch('/api/profile/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ private_account: chkPrivateAccount.checked })
-            });
-        });
-    }
-
-    if (chkEmailNotif) {
-        chkEmailNotif.addEventListener('change', async () => {
-            await fetch('/api/profile/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email_notifications: chkEmailNotif.checked })
-            });
-        });
-    }
-
-    // 4. Schimbare limbă (RO / EN)
-    const langDropdown = document.getElementById('langDropdown');
-    const langMenuBtn = document.getElementById('langMenuBtn');
-    const langOptionsList = document.getElementById('langOptions');
-    const langOptionBtns = document.querySelectorAll('.lang-option');
-    let currentLang = 'ro';
+    // ==========================================
+    // TRADUCERI
+    // ==========================================
 
     const translations = {
         ro: {
@@ -131,21 +23,34 @@ document.addEventListener('DOMContentLoaded', () => {
             settings: "Setări",
             editTitle: "Editare informații profil",
             lblName: "Nume complet",
+            lblEmail: "Email",
             lblFaculty: "Facultate",
             lblYear: "An de studiu",
             lblBio: "Despre mine",
             saveChanges: "Salvează",
+            cancel: "Anulează",
             settingsTitle: "Setări cont & confidențialitate",
             setPrivate: "Cont privat",
             setPrivateDesc: "Doar prietenii aprobați îți pot vedea profilul și activitatea.",
             setEmailNotif: "Notificări pe email",
             setEmailDesc: "Primește alerte când cineva îți trimite un mesaj nou.",
             setAccountEmail: "Email asociat",
+            passwordTitle: "Schimbă parola",
+            lblCurrentPassword: "Parola actuală",
+            lblNewPassword: "Parola nouă",
+            lblConfirmPassword: "Confirmă parola nouă",
+            changePassword: "Schimbă parola",
             emptyPosts: "Nicio postare încă.",
             emptyMessages: "Niciun mesaj încă.",
             emptyNotifications: "Nicio notificare încă.",
             emptyFriends: "Lista de prieteni este goală.",
-            searchPlaceholder: "Caută..."
+            searchPlaceholder: "Caută...",
+            msgSaving: "Se salvează...",
+            msgProfileUpdated: "Profil actualizat!",
+            msgSettingsSaved: "Setare salvată.",
+            msgPasswordChanged: "Parola a fost schimbată!",
+            msgPasswordMismatch: "Parolele noi nu coincid.",
+            msgError: "Eroare de conexiune cu serverul."
         },
         en: {
             langLabel: "LANGUAGE",
@@ -163,52 +68,315 @@ document.addEventListener('DOMContentLoaded', () => {
             settings: "Settings",
             editTitle: "Edit profile information",
             lblName: "Full name",
+            lblEmail: "Email",
             lblFaculty: "Faculty",
             lblYear: "Year of study",
             lblBio: "About me",
             saveChanges: "Save changes",
+            cancel: "Cancel",
             settingsTitle: "Account & privacy settings",
             setPrivate: "Private account",
             setPrivateDesc: "Only approved friends can view your profile and activity.",
             setEmailNotif: "Email notifications",
             setEmailDesc: "Receive alerts when someone sends you a new message.",
             setAccountEmail: "Associated email",
+            passwordTitle: "Change password",
+            lblCurrentPassword: "Current password",
+            lblNewPassword: "New password",
+            lblConfirmPassword: "Confirm new password",
+            changePassword: "Change password",
             emptyPosts: "No posts yet.",
             emptyMessages: "No messages yet.",
             emptyNotifications: "No notifications yet.",
             emptyFriends: "Your friends list is empty.",
-            searchPlaceholder: "Search..."
+            searchPlaceholder: "Search...",
+            msgSaving: "Saving...",
+            msgProfileUpdated: "Profile updated!",
+            msgSettingsSaved: "Setting saved.",
+            msgPasswordChanged: "Password changed!",
+            msgPasswordMismatch: "The new passwords do not match.",
+            msgError: "Server connection error."
         }
     };
 
-    langMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        langOptionsList.classList.toggle('hidden');
+    function readSavedLang() {
+        try {
+            return localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'ro';
+        } catch (e) {
+            return 'ro';
+        }
+    }
+
+    let currentLang = readSavedLang();
+    const t = (key) => translations[currentLang][key] || key;
+
+    // ==========================================
+    // 1. TAB DIN URL (ex: /profile#notifications)
+    // ==========================================
+
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    function showTab(name) {
+        const panel = $(`tab-${name}`);
+        if (!panel) return;
+
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+
+        const btn = document.querySelector(`.nav-item[data-tab="${name}"]`);
+        if (btn) btn.classList.add('active');
+        panel.classList.add('active');
+    }
+
+    const hashTab = window.location.hash.replace('#', '');
+    if (hashTab) showTab(hashTab);
+
+    // ==========================================
+    // 2. NAVIGARE ÎNTRE TAB-URI
+    // ==========================================
+
+    document.querySelectorAll('button.nav-item[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const name = btn.getAttribute('data-tab');
+            showTab(name);
+            history.replaceState(null, '', name === 'profile' ? '/profile' : `#${name}`);
+        });
     });
+
+    // ==========================================
+    // 3. PANOURI EDITARE / SETĂRI
+    // ==========================================
+
+    const toggleEditBtn = $('toggleEditBtn');
+    const toggleSettingsBtn = $('toggleSettingsBtn');
+    const editProfilePanel = $('editProfilePanel');
+    const settingsPanel = $('settingsPanel');
+
+    if (toggleEditBtn && editProfilePanel) {
+        toggleEditBtn.addEventListener('click', () => {
+            if (settingsPanel) settingsPanel.classList.add('hidden');
+            editProfilePanel.classList.toggle('hidden');
+            if (!editProfilePanel.classList.contains('hidden')) {
+                $('inputFullName')?.focus();
+            }
+        });
+    }
+
+    if (toggleSettingsBtn && settingsPanel) {
+        toggleSettingsBtn.addEventListener('click', () => {
+            if (editProfilePanel) editProfilePanel.classList.add('hidden');
+            settingsPanel.classList.toggle('hidden');
+        });
+    }
+
+    $('cancelEditBtn')?.addEventListener('click', () => {
+        editProfileForm?.reset();
+        editProfilePanel?.classList.add('hidden');
+    });
+
+    function setStatus(el, text, ok) {
+        if (!el) return;
+        el.textContent = text;
+        el.style.color = ok === undefined ? '' : (ok ? '#399b70' : '#c34060');
+        if (ok) {
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => { el.textContent = ''; }, 2500);
+        }
+    }
+
+    async function postJson(url, body) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        let result = {};
+        try { result = await response.json(); } catch (e) { /* ignore */ }
+        return { ok: response.ok && result.success, result };
+    }
+
+    // ==========================================
+    // 4. EDITARE PROFIL
+    // ==========================================
+
+    const editProfileForm = $('editProfileForm');
+    const editStatus = $('editStatus');
+
+    function showUser(user) {
+        const setText = (id, value) => { const el = $(id); if (el) el.textContent = value; };
+
+        setText('displayFullName', user.full_name);
+        setText('displayFaculty', user.faculty);
+        setText('displayYear', user.year);
+        setText('displayEmail', user.email);
+        setText('facultySeparator', (user.faculty && user.year) ? ' • ' : '');
+
+        const facultyLine = $('facultyLine');
+        if (facultyLine) facultyLine.style.display = (user.faculty || user.year) ? 'block' : 'none';
+
+        const displayBio = $('displayBio');
+        if (displayBio) {
+            displayBio.textContent = user.bio;
+            displayBio.style.display = user.bio ? 'block' : 'none';
+        }
+
+        // Numele din bara laterală
+        document.querySelectorAll('.profile-info strong').forEach(el => {
+            el.textContent = user.full_name;
+        });
+
+        // Valorile implicite ale formularului (pentru "Anulează")
+        ['inputFullName', 'inputEmail', 'inputFaculty', 'inputYear'].forEach(id => {
+            const el = $(id);
+            if (el) el.defaultValue = el.value;
+        });
+        const bio = $('inputBio');
+        if (bio) bio.defaultValue = bio.value;
+    }
+
+    if (editProfileForm) {
+        editProfileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            setStatus(editStatus, t('msgSaving'));
+
+            const body = {
+                full_name: $('inputFullName').value,
+                faculty: $('inputFaculty').value,
+                year: $('inputYear').value,
+                bio: $('inputBio').value
+            };
+            if ($('inputEmail')) body.email = $('inputEmail').value;
+
+            try {
+                const { ok, result } = await postJson('/api/profile/update', body);
+                if (ok) {
+                    showUser(result.user);
+                    setStatus(editStatus, t('msgProfileUpdated'), true);
+                } else {
+                    setStatus(editStatus, result.message || t('msgError'), false);
+                }
+            } catch (err) {
+                setStatus(editStatus, t('msgError'), false);
+            }
+        });
+    }
+
+    // ==========================================
+    // 5. SETĂRI CONT
+    // ==========================================
+
+    const settingsStatus = $('settingsStatus');
+
+    function bindSetting(id, field) {
+        const checkbox = $(id);
+        if (!checkbox) return;
+
+        checkbox.addEventListener('change', async () => {
+            try {
+                const { ok, result } = await postJson('/api/profile/settings', { [field]: checkbox.checked });
+                if (ok) {
+                    setStatus(settingsStatus, t('msgSettingsSaved'), true);
+                } else {
+                    checkbox.checked = !checkbox.checked;
+                    setStatus(settingsStatus, result.message || t('msgError'), false);
+                }
+            } catch (err) {
+                checkbox.checked = !checkbox.checked;
+                setStatus(settingsStatus, t('msgError'), false);
+            }
+        });
+    }
+
+    bindSetting('chkPrivateAccount', 'private_account');
+    bindSetting('chkEmailNotif', 'email_notifications');
+
+    // ==========================================
+    // 6. SCHIMBARE PAROLĂ
+    // ==========================================
+
+    const passwordForm = $('passwordForm');
+    const passwordStatus = $('passwordStatus');
+
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const current_password = $('inputCurrentPassword').value;
+            const new_password = $('inputNewPassword').value;
+            const confirm_password = $('inputConfirmPassword').value;
+
+            if (new_password !== confirm_password) {
+                setStatus(passwordStatus, t('msgPasswordMismatch'), false);
+                return;
+            }
+
+            setStatus(passwordStatus, t('msgSaving'));
+
+            try {
+                const { ok, result } = await postJson('/api/profile/password', {
+                    current_password, new_password, confirm_password
+                });
+                if (ok) {
+                    passwordForm.reset();
+                    setStatus(passwordStatus, t('msgPasswordChanged'), true);
+                } else {
+                    setStatus(passwordStatus, result.message || t('msgError'), false);
+                }
+            } catch (err) {
+                setStatus(passwordStatus, t('msgError'), false);
+            }
+        });
+    }
+
+    // ==========================================
+    // 7. LIMBĂ (RO / EN) - salvată între pagini
+    // ==========================================
+
+    const langDropdown = $('langDropdown');
+    const langMenuBtn = $('langMenuBtn');
+    const langOptionsList = $('langOptions');
+    const langOptionBtns = document.querySelectorAll('.lang-option');
+
+    function applyLanguage(lang) {
+        if (!translations[lang]) return;
+        currentLang = lang;
+        const dict = translations[lang];
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (dict[key]) el.textContent = dict[key];
+        });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (dict[key]) el.placeholder = dict[key];
+        });
+
+        langOptionBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === lang));
+        document.documentElement.lang = lang;
+    }
+
+    if (langMenuBtn && langOptionsList) {
+        langMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            langOptionsList.classList.toggle('hidden');
+        });
+    }
 
     langOptionBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            currentLang = btn.getAttribute('data-lang');
-            const dict = translations[currentLang];
-
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (dict[key]) el.textContent = dict[key];
-            });
-
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if (dict[key]) el.placeholder = dict[key];
-            });
-
-            langOptionBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === currentLang));
-            langOptionsList.classList.add('hidden');
+            const lang = btn.getAttribute('data-lang');
+            try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
+            applyLanguage(lang);
+            langOptionsList?.classList.add('hidden');
         });
     });
 
     document.addEventListener('click', (e) => {
-        if (!langDropdown.contains(e.target)) {
+        if (langDropdown && langOptionsList && !langDropdown.contains(e.target)) {
             langOptionsList.classList.add('hidden');
         }
     });
+
+    applyLanguage(currentLang);
 });

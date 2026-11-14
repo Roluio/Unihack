@@ -1,10 +1,10 @@
 
 /*
 =============================================
-UNIBUDDY - MESSAGES LAYOUT FIX
+STUDYGRAM - MESSAGES LAYOUT FIX
 
-1. Remove duplicate UniBuddy logo
-2. Keep the main UniBuddy logo in top navbar
+1. Remove duplicate StudyGram logo
+2. Keep the main StudyGram logo in top navbar
 3. One scrollbar for groups and private chats
 4. Keep search and user profile outside scroll
 5. Preserve all existing chat functionality
@@ -20,7 +20,7 @@ UNIBUDDY - MESSAGES LAYOUT FIX
 
         if (!groupsList || !messagesList) {
             console.warn(
-                "UniBuddy: Conversation lists not found."
+                "StudyGram: Conversation lists not found."
             );
             return;
         }
@@ -53,7 +53,7 @@ UNIBUDDY - MESSAGES LAYOUT FIX
             }
 
             /*
-             * Remove second UniBuddy logo
+             * Remove second StudyGram logo
              */
 
             .ub-messages-sidebar > .logo,
@@ -165,7 +165,7 @@ UNIBUDDY - MESSAGES LAYOUT FIX
 
         if (!sidebar || !sidebar.contains(messagesList)) {
             console.warn(
-                "UniBuddy: Common messages sidebar not found."
+                "StudyGram: Common messages sidebar not found."
             );
             return;
         }
@@ -183,7 +183,7 @@ UNIBUDDY - MESSAGES LAYOUT FIX
                 ".logo-container"
             )
         ).find(element =>
-            element.textContent.includes("UniBuddy")
+            element.textContent.includes("StudyGram")
         );
 
         if (duplicateLogo) {
@@ -293,7 +293,7 @@ UNIBUDDY - MESSAGES LAYOUT FIX
                 });
             } else {
                 console.warn(
-                    "UniBuddy: Unexpected conversation order."
+                    "StudyGram: Unexpected conversation order."
                 );
                 scroll.remove();
                 return;
@@ -387,7 +387,7 @@ UNIBUDDY - MESSAGES LAYOUT FIX
         window.lucide?.createIcons();
 
         console.log(
-            "UniBuddy Messages: single conversation scrollbar enabled."
+            "StudyGram Messages: single conversation scrollbar enabled."
         );
     }
 
