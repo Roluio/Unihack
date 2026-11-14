@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Activare tab din URL hash dacă venim din /home (ex: /profile#messages)
     const hashTab = window.location.hash.replace('#', '');
     if (hashTab && document.getElementById(`tab-${hashTab}`)) {
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -9,23 +8,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(`tab-${hashTab}`).classList.add('active');
     }
 
-    // 2. Navigare între tab-urile de pe pagina de profil
     const navItems = document.querySelectorAll('button.nav-item[data-tab]');
     const tabPanels = document.querySelectorAll('.tab-panel');
 
     navItems.forEach(btn => {
         btn.addEventListener('click', () => {
             const targetTab = btn.getAttribute('data-tab');
-
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             tabPanels.forEach(panel => panel.classList.remove('active'));
-
             btn.classList.add('active');
             document.getElementById(`tab-${targetTab}`).classList.add('active');
+
+            if (targetTab === 'friends') loadFriends();
+            if (targetTab === 'notifications') loadNotifications();
+            if (targetTab === 'search') searchPeers('');
         });
     });
 
-    // 3. Editare profil & Setări (rulăm doar dacă elementele există pe pagina curentă)
     const toggleEditBtn = document.getElementById('toggleEditBtn');
     const toggleSettingsBtn = document.getElementById('toggleSettingsBtn');
     const editProfilePanel = document.getElementById('editProfilePanel');
@@ -36,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsPanel.classList.add('hidden');
             editProfilePanel.classList.toggle('hidden');
         });
-
         toggleSettingsBtn.addEventListener('click', () => {
             editProfilePanel.classList.add('hidden');
             settingsPanel.classList.toggle('hidden');
@@ -63,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (result.success) {
                 document.getElementById('displayFullName').textContent = result.user.full_name;
-                
                 const facultyLine = document.getElementById('facultyLine');
                 const displayFaculty = document.getElementById('displayFaculty');
                 const displayYear = document.getElementById('displayYear');
@@ -78,8 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayBio.textContent = result.user.bio;
                 displayBio.style.display = result.user.bio ? 'block' : 'none';
 
-                editStatus.textContent = currentLang === 'ro' ? 'Profil actualizat!' : 'Profile updated!';
+                editStatus.textContent = currentLang === 'ro' ? 'Profil actualizat în baza de date!' : 'Profile updated!';
                 setTimeout(() => { editStatus.textContent = ''; }, 2500);
+            } else {
+                editStatus.textContent = result.message || 'Eroare la actualizare';
             }
         });
     }
@@ -107,7 +106,129 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. Schimbare limbă (RO / EN)
+    // ==========================================
+    // CAUTARE STUDENTI (Spring Boot /api/users/search)
+    // ==========================================
+    const searchInput = document.getElementById('searchInput');
+    const searchResultsContainer = document.getElementById('searchResultsContainer');
+    let searchTimer = null;
+
+    async function searchPeers(query) {
+        if (!searchResultsContainer) return;
+        try {
+            const resp = await fetch(`/api/users/search?query=${encodeURIComponent(query)}`);
+            const users = await resp.json();
+            if (!Array.isArray(users) || users.length === 0) {
+                searchResultsContainer.innerHTML = `<p class="empty-msg">Niciun student găsit.</p>`;
+                return;
+            }
+            searchResultsContainer.innerHTML = users.map(u => `
+                <div class="sub-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <div>
+                        <strong>${u.firstName} ${u.lastName}</strong> <span style="opacity:0.7;">@${u.username}</span>
+                        <div style="font-size:0.85rem;opacity:0.8;">${u.faculty || ''} • Anul ${u.studyYear || '-'}</div>
+                    </div>
+                    <button type="button" class="primary-button" onclick="sendFriendRequest('${u.id}', this)">+ Adaugă prieten</button>
+                </div>
+            `).join('');
+        } catch (e) {
+            searchResultsContainer.innerHTML = `<p class="empty-msg">Eroare la căutare.</p>`;
+        }
+    }
+
+    window.sendFriendRequest = async (userId, btn) => {
+        btn.disabled = true;
+        btn.textContent = 'Se trimite...';
+        const resp = await fetch(`/api/friends/request/${userId}`, { method: 'POST' });
+        const data = await resp.json();
+        if (resp.ok) {
+            btn.textContent = 'Cerere trimisă ✓';
+        } else {
+            btn.textContent = data.message || 'Eroare';
+        }
+    };
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => searchPeers(searchInput.value.trim()), 300);
+        });
+    }
+
+    // ==========================================
+    // CERERI PRIETENIE (Notifications tab)
+    // ==========================================
+    const notificationsContainer = document.getElementById('notificationsContainer');
+
+    async function loadNotifications() {
+        if (!notificationsContainer) return;
+        try {
+            const resp = await fetch('/api/friends/requests/received');
+            const requests = await resp.json();
+            if (!Array.isArray(requests) || requests.length === 0) {
+                notificationsContainer.innerHTML = `<p class="empty-msg">Nicio cerere de prietenie nouă.</p>`;
+                return;
+            }
+            notificationsContainer.innerHTML = requests.map(r => `
+                <div class="sub-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <div>
+                        <strong>${r.user.firstName} ${r.user.lastName}</strong> (@${r.user.username}) ți-a trimis o cerere de prietenie.
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="primary-button" onclick="respondRequest('${r.requestId}', 'accept')">Acceptă</button>
+                        <button type="button" class="secondary-button" onclick="respondRequest('${r.requestId}', 'reject')">Refuză</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            notificationsContainer.innerHTML = `<p class="empty-msg">Eroare la încărcarea notificărilor.</p>`;
+        }
+    }
+
+    window.respondRequest = async (requestId, action) => {
+        await fetch(`/api/friends/${action}/${requestId}`, { method: 'POST' });
+        loadNotifications();
+        loadFriends();
+    };
+
+    // ==========================================
+    // LISTA PRIETENI (Friends tab)
+    // ==========================================
+    const friendsContainer = document.getElementById('friendsContainer');
+
+    async function loadFriends() {
+        if (!friendsContainer) return;
+        try {
+            const resp = await fetch('/api/friends');
+            const friends = await resp.json();
+            if (!Array.isArray(friends) || friends.length === 0) {
+                friendsContainer.innerHTML = `<p class="empty-msg">Lista de prieteni este goală.</p>`;
+                return;
+            }
+            friendsContainer.innerHTML = friends.map(f => `
+                <div class="sub-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <div>
+                        <strong>${f.firstName} ${f.lastName}</strong> <span style="opacity:0.7;">@${f.username}</span>
+                        <div style="font-size:0.85rem;opacity:0.8;">${f.faculty || ''} • Anul ${f.studyYear || '-'}</div>
+                    </div>
+                    <button type="button" class="secondary-button" onclick="removeFriend('${f.id}')">Elimină</button>
+                </div>
+            `).join('');
+        } catch (e) {
+            friendsContainer.innerHTML = `<p class="empty-msg">Eroare la încărcarea prietenilor.</p>`;
+        }
+    }
+
+    window.removeFriend = async (friendId) => {
+        await fetch(`/api/friends/${friendId}`, { method: 'DELETE' });
+        loadFriends();
+    };
+
+    if (hashTab === 'friends') loadFriends();
+    if (hashTab === 'notifications') loadNotifications();
+    if (hashTab === 'search') searchPeers('');
+
+    // 4. Schimbare limba (RO / EN)
     const langDropdown = document.getElementById('langDropdown');
     const langMenuBtn = document.getElementById('langMenuBtn');
     const langOptionsList = document.getElementById('langOptions');
@@ -116,68 +237,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const translations = {
         ro: {
-            langLabel: "LIMBĂ",
-            logout: "Deconectare",
-            navHome: "Acasă",
-            homeTitle: "Acasă",
-            emptyHome: "Nicio postare recentă de la prieteni.",
-            navProfile: "Profilul meu",
-            navPosts: "Postările mele",
-            navMessages: "Mesaje",
-            navNotifications: "Notificări",
-            navSearch: "Căutare",
-            navFriends: "Prieteni",
-            editProfile: "Editează profil",
-            settings: "Setări",
-            editTitle: "Editare informații profil",
-            lblName: "Nume complet",
-            lblFaculty: "Facultate",
-            lblYear: "An de studiu",
-            lblBio: "Despre mine",
-            saveChanges: "Salvează",
-            settingsTitle: "Setări cont & confidențialitate",
-            setPrivate: "Cont privat",
-            setPrivateDesc: "Doar prietenii aprobați îți pot vedea profilul și activitatea.",
-            setEmailNotif: "Notificări pe email",
-            setEmailDesc: "Primește alerte când cineva îți trimite un mesaj nou.",
-            setAccountEmail: "Email asociat",
-            emptyPosts: "Nicio postare încă.",
-            emptyMessages: "Niciun mesaj încă.",
-            emptyNotifications: "Nicio notificare încă.",
-            emptyFriends: "Lista de prieteni este goală.",
-            searchPlaceholder: "Caută..."
+            langLabel: "LIMBĂ", logout: "Deconectare", navHome: "Acasă", homeTitle: "Acasă",
+            emptyHome: "Nicio postare recentă de la prieteni.", navProfile: "Profilul meu",
+            navPosts: "Postările mele", navMessages: "Mesaje", navNotifications: "Notificări",
+            navSearch: "Căutare", navFriends: "Prieteni", editProfile: "Editează profil",
+            settings: "Setări", editTitle: "Editare informații profil", lblName: "Nume complet",
+            lblFaculty: "Facultate", lblYear: "An de studiu", lblBio: "Despre mine",
+            saveChanges: "Salvează", settingsTitle: "Setări cont & confidențialitate",
+            setPrivate: "Cont privat", setPrivateDesc: "Doar prietenii aprobați îți pot vedea profilul și activitatea.",
+            setEmailNotif: "Notificări pe email", setEmailDesc: "Primește alerte când cineva îți trimite un mesaj nou.",
+            setAccountEmail: "Email asociat", emptyPosts: "Nicio postare încă.",
+            emptyMessages: "Niciun mesaj încă.", emptyNotifications: "Nicio notificare încă.",
+            emptyFriends: "Lista de prieteni este goală.", searchPlaceholder: "Caută..."
         },
         en: {
-            langLabel: "LANGUAGE",
-            logout: "Log out",
-            navHome: "Home",
-            homeTitle: "Home",
-            emptyHome: "No recent posts from friends.",
-            navProfile: "My profile",
-            navPosts: "My posts",
-            navMessages: "Messages",
-            navNotifications: "Notifications",
-            navSearch: "Search",
-            navFriends: "Friends",
-            editProfile: "Edit profile",
-            settings: "Settings",
-            editTitle: "Edit profile information",
-            lblName: "Full name",
-            lblFaculty: "Faculty",
-            lblYear: "Year of study",
-            lblBio: "About me",
-            saveChanges: "Save changes",
-            settingsTitle: "Account & privacy settings",
-            setPrivate: "Private account",
-            setPrivateDesc: "Only approved friends can view your profile and activity.",
-            setEmailNotif: "Email notifications",
-            setEmailDesc: "Receive alerts when someone sends you a new message.",
-            setAccountEmail: "Associated email",
-            emptyPosts: "No posts yet.",
-            emptyMessages: "No messages yet.",
-            emptyNotifications: "No notifications yet.",
-            emptyFriends: "Your friends list is empty.",
-            searchPlaceholder: "Search..."
+            langLabel: "LANGUAGE", logout: "Log out", navHome: "Home", homeTitle: "Home",
+            emptyHome: "No recent posts from friends.", navProfile: "My profile",
+            navPosts: "My posts", navMessages: "Messages", navNotifications: "Notifications",
+            navSearch: "Search", navFriends: "Friends", editProfile: "Edit profile",
+            settings: "Settings", editTitle: "Edit profile information", lblName: "Full name",
+            lblFaculty: "Faculty", lblYear: "Year of study", lblBio: "About me",
+            saveChanges: "Save changes", settingsTitle: "Account & privacy settings",
+            setPrivate: "Private account", setPrivateDesc: "Only approved friends can view your profile and activity.",
+            setEmailNotif: "Email notifications", setEmailDesc: "Receive alerts when someone sends you a new message.",
+            setAccountEmail: "Associated email", emptyPosts: "No posts yet.",
+            emptyMessages: "No messages yet.", emptyNotifications: "No notifications yet.",
+            emptyFriends: "Your friends list is empty.", searchPlaceholder: "Search..."
         }
     };
 
@@ -190,17 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             currentLang = btn.getAttribute('data-lang');
             const dict = translations[currentLang];
-
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (dict[key]) el.textContent = dict[key];
             });
-
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key]) el.placeholder = dict[key];
             });
-
             langOptionBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === currentLang));
             langOptionsList.classList.add('hidden');
         });
