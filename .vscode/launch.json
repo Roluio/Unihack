@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "StudyHubApplication (Dev)",
+      "request": "launch",
+      "mainClass": "com.studyhub.StudyhubBackendApplication",
+      "projectName": "studyhub-backend",
+      "envFile": "${workspaceFolder}/studyhub-backend/.env",
+      "vmArgs": "-Dspring.profiles.active=dev"
+    }
+  ]
+}

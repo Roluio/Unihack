@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     signupStatus.textContent = '';
                     signupSection.classList.add('hidden');
                     loginSection.classList.remove('hidden');
-                    document.getElementById('loginUsername').value = username;
+                    document.getElementById('loginUsername').value = email;
                     loginStatus.style.color = '#399b70';
                     loginStatus.textContent = translations[currentLang].accountCreated;
                 }, 1200);

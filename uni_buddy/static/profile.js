@@ -111,6 +111,129 @@ document.addEventListener('DOMContentLoaded', () => {
     const t = (key) => translations[currentLang][key] || key;
 
     // ==========================================
+    // PRIETENI / CĂUTARE / CERERI (Spring Boot via Flask proxy)
+    // ==========================================
+
+    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+
+    const searchInput = $('searchInput');
+    const searchResultsContainer = $('searchResultsContainer');
+    const friendsContainer = $('friendsContainer');
+    const friendRequestsContainer = $('friendRequestsContainer');
+    let searchTimer = null;
+
+    const personLine = (u) => `
+        <div>
+            <strong>${esc(u.firstName)} ${esc(u.lastName)}</strong>
+            <span style="opacity:0.7;">@${esc(u.username)}</span>
+            <div style="font-size:0.85rem;opacity:0.8;">${esc(u.faculty)} • Anul ${esc(u.studyYear || '-')}</div>
+        </div>`;
+
+    const cardStyle = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+
+    async function fetchList(url) {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        return Array.isArray(data) ? data : [];
+    }
+
+    async function searchPeers(query) {
+        if (!searchResultsContainer) return;
+        try {
+            const users = await fetchList(`/api/users/search?query=${encodeURIComponent(query)}`);
+            if (users.length === 0) {
+                searchResultsContainer.innerHTML = '<p class="empty-msg">Niciun student găsit.</p>';
+                return;
+            }
+            searchResultsContainer.innerHTML = users.map(u => `
+                <div class="sub-card" style="${cardStyle}">
+                    ${personLine(u)}
+                    <button type="button" class="primary-button" data-action="add-friend" data-id="${esc(u.id)}">+ Adaugă prieten</button>
+                </div>`).join('');
+        } catch (e) {
+            searchResultsContainer.innerHTML = '<p class="empty-msg">Eroare la căutare.</p>';
+        }
+    }
+
+    async function loadFriendRequests() {
+        if (!friendRequestsContainer) return;
+        try {
+            const requests = await fetchList('/api/friends/requests/received');
+            friendRequestsContainer.innerHTML = requests.map(r => `
+                <div class="sub-card" style="${cardStyle}">
+                    <div>
+                        <strong>${esc(r.user.firstName)} ${esc(r.user.lastName)}</strong> (@${esc(r.user.username)})
+                        ți-a trimis o cerere de prietenie.
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="primary-button" data-action="accept" data-id="${esc(r.requestId)}">Acceptă</button>
+                        <button type="button" class="secondary-button" data-action="reject" data-id="${esc(r.requestId)}">Refuză</button>
+                    </div>
+                </div>`).join('');
+        } catch (e) {
+            friendRequestsContainer.innerHTML = '<p class="empty-msg">Eroare la încărcarea cererilor.</p>';
+        }
+    }
+
+    async function loadFriends() {
+        if (!friendsContainer) return;
+        try {
+            const friends = await fetchList('/api/friends');
+            if (friends.length === 0) {
+                friendsContainer.innerHTML = `<p class="empty-msg">${esc(t('emptyFriends'))}</p>`;
+                return;
+            }
+            friendsContainer.innerHTML = friends.map(f => `
+                <div class="sub-card" style="${cardStyle}">
+                    ${personLine(f)}
+                    <button type="button" class="secondary-button" data-action="remove-friend" data-id="${esc(f.id)}">Elimină</button>
+                </div>`).join('');
+        } catch (e) {
+            friendsContainer.innerHTML = '<p class="empty-msg">Eroare la încărcarea prietenilor.</p>';
+        }
+    }
+
+    function loadTabData(name) {
+        if (name === 'friends') loadFriends();
+        if (name === 'notifications') loadFriendRequests();
+        if (name === 'search') searchPeers(searchInput ? searchInput.value.trim() : '');
+    }
+
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const { action, id } = btn.dataset;
+
+        if (action === 'add-friend') {
+            btn.disabled = true;
+            btn.textContent = 'Se trimite...';
+            try {
+                const resp = await fetch(`/api/friends/request/${encodeURIComponent(id)}`, { method: 'POST' });
+                const data = await resp.json().catch(() => ({}));
+                btn.textContent = resp.ok ? 'Cerere trimisă ✓' : (data.message || 'Eroare');
+            } catch (err) {
+                btn.textContent = 'Eroare';
+            }
+        } else if (action === 'accept' || action === 'reject') {
+            await fetch(`/api/friends/${action}/${encodeURIComponent(id)}`, { method: 'POST' });
+            loadFriendRequests();
+            loadFriends();
+        } else if (action === 'remove-friend') {
+            await fetch(`/api/friends/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            loadFriends();
+        }
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => searchPeers(searchInput.value.trim()), 300);
+        });
+    }
+
+    // ==========================================
     // 1. TAB DIN URL (ex: /profile#notifications)
     // ==========================================
 
@@ -126,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.querySelector(`.nav-item[data-tab="${name}"]`);
         if (btn) btn.classList.add('active');
         panel.classList.add('active');
+        loadTabData(name);
     }
 
     const hashTab = window.location.hash.replace('#', '');
