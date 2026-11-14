@@ -371,6 +371,25 @@ def update_settings():
 # START SERVER
 # ==========================================
 
+
+
+# ==========================================
+# UNIBUDDY AI
+# ==========================================
+
+@app.route("/ai")
+def ai_page():
+    username = session.get("username")
+
+    if not username or username not in USERS:
+        return redirect(url_for("index"))
+
+    return render_template(
+        "ai.html",
+        username=username,
+        user=USERS[username]
+    )
+
 if __name__ == "__main__":
     app.run(
         host="127.0.0.1",
