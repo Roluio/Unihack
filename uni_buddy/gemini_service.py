@@ -14,6 +14,8 @@ Configuration (environment variables or a .env file next to app.py):
 import json
 import os
 import re
+import threading
+import time
 from pathlib import Path
 
 # ------------------------------------------------------------------
@@ -52,16 +54,56 @@ except ImportError:  # pragma: no cover - handled at runtime with a clear messag
 DEFAULT_MODELS = [
     "gemini-3.8-flash",
     "gemini-3.6-flash",
+    "gemini-3.5-flash",
     "gemini-3.5-flash-lite",
-    "gemini-2.5-flash",
+    "gemini-3.1-flash-lite",
+]
+
+# Small, fast models for short helper calls (e.g. picking which file to open).
+FAST_MODELS = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
 ]
 
 
-def model_candidates():
+def model_candidates(fast=False):
+    if fast:
+        return list(FAST_MODELS)
     preferred = os.environ.get("GEMINI_MODEL", "").strip()
     models = [preferred] if preferred else []
     models += [m for m in DEFAULT_MODELS if m not in models]
     return models
+
+
+# ------------------------------------------------------------------
+# Speed: a model that just failed (quota / overloaded / missing / timeout)
+# is skipped for a while, so the next requests go straight to a model that
+# works instead of waiting for the broken one every time.
+# ------------------------------------------------------------------
+
+COOLDOWN_SECONDS = {404: 3600, 429: 90, 500: 30, 502: 30, 503: 30, 504: 60, "timeout": 60}
+_cooldowns = {}
+_cooldown_lock = threading.Lock()
+
+
+def _mark_bad(model, reason):
+    seconds = COOLDOWN_SECONDS.get(reason, 30)
+    with _cooldown_lock:
+        _cooldowns[model] = time.monotonic() + seconds
+
+
+def _available(models):
+    now = time.monotonic()
+    with _cooldown_lock:
+        ready = [m for m in models if _cooldowns.get(m, 0) <= now]
+    # if everything is cooling down, try them all anyway
+    return ready or list(models)
+
+
+# Per-attempt timeout (the SDK would otherwise retry for minutes).
+TIMEOUT_SECONDS = 25
+TIMEOUT_WITH_DOCS_SECONDS = 70
 
 
 class AIError(Exception):
@@ -210,13 +252,26 @@ def _friendly_api_error(exc):
     return AIError("Serviciul Gemini nu a putut răspunde. Încearcă din nou.", status=502)
 
 
-def generate(contents, system, temperature=0.7, json_output=False):
+def _has_binary(contents):
+    for content in contents:
+        for part in getattr(content, "parts", None) or []:
+            if getattr(part, "inline_data", None) is not None:
+                return True
+    return False
+
+
+def generate(contents, system, temperature=0.7, json_output=False, fast=False):
     """Run a generation, falling back across models. Returns response text."""
     client = get_client()
 
+    timeout = TIMEOUT_WITH_DOCS_SECONDS if _has_binary(contents) else TIMEOUT_SECONDS
     config_kwargs = {
         "system_instruction": system,
         "temperature": temperature,
+        "http_options": types.HttpOptions(
+            timeout=timeout * 1000,
+            retry_options=types.HttpRetryOptions(attempts=1),
+        ),
     }
     if json_output:
         config_kwargs["response_mime_type"] = "application/json"
@@ -225,18 +280,24 @@ def generate(contents, system, temperature=0.7, json_output=False):
 
     last_error = None
 
-    for model in model_candidates():
+    for model in _available(model_candidates(fast)):
         try:
             response = client.models.generate_content(
                 model=model, contents=contents, config=config
             )
         except genai_errors.APIError as exc:
             last_error = exc
-            # unknown model / overloaded / quota -> try the next model
-            if getattr(exc, "code", None) in (404, 429, 500, 503):
+            code = getattr(exc, "code", None)
+            # unknown model / overloaded / quota / timeout -> try the next model
+            if code in (404, 429, 500, 502, 503, 504):
+                _mark_bad(model, code)
                 continue
             raise _friendly_api_error(exc) from exc
         except Exception as exc:  # network etc.
+            if "timeout" in type(exc).__name__.lower():
+                _mark_bad(model, "timeout")
+                last_error = exc
+                continue
             raise AIError(
                 "Nu m-am putut conecta la Gemini. Verifică conexiunea la internet."
             ) from exc
@@ -252,6 +313,8 @@ def generate(contents, system, temperature=0.7, json_output=False):
             status=422,
         )
 
+    if last_error is not None and not isinstance(last_error, genai_errors.APIError):
+        raise AIError("Gemini a răspuns prea greu. Încearcă din nou.", status=504)
     raise _friendly_api_error(last_error) if last_error else AIError(
         "Niciun model Gemini nu este disponibil."
     )
@@ -407,6 +470,7 @@ def route_files(message, history, catalog, language, profile):
         "You are a precise file-selection router. Output JSON only.",
         temperature=0.0,
         json_output=True,
+        fast=True,
     )
     try:
         data = _parse_json(raw)
