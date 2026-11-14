@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: studyhub-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/studyhub}
+    username: ${DB_USER:studyhub_user}
+    password: ${DB_PASSWORD:studyhub_secret_pass}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:c3R1ZHlodWItc3VwZXItc2VjcmV0LWp3dC1rZXktMjAyNi1mb3Itc3R1ZGVudHM=}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}     # 15 minute
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 zile
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,https://*.vercel.app}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

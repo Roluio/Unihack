@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Autentificare | StudyHub</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #17233c;
+      background: #f5f7fb;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      --blue: #4263eb;
+      --muted: #78839a;
+      --border: #e4e8f0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 32px 20px;
+      background:
+        radial-gradient(ellipse at 12% 12%, rgba(86, 116, 255, .09), transparent 34%),
+        radial-gradient(ellipse at 90% 92%, rgba(115, 91, 230, .08), transparent 30%),
+        #f5f7fb;
+    }
+
+    .login-card {
+      width: min(100%, 1000px);
+      min-height: 620px;
+      display: grid;
+      grid-template-columns: 0.94fr 1.06fr;
+      overflow: hidden;
+      border: 1px solid rgba(228, 232, 240, .8);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 24px 70px rgba(38, 53, 91, .12);
+    }
+
+    .welcome-panel {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      padding: 42px;
+      color: #fff;
+      background: linear-gradient(145deg, #3557df 0%, #5747d5 100%);
+    }
+
+    .welcome-panel::before,
+    .welcome-panel::after {
+      position: absolute;
+      content: "";
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .welcome-panel::before {
+      width: 410px;
+      height: 410px;
+      right: -210px;
+      top: 100px;
+    }
+
+    .welcome-panel::after {
+      width: 300px;
+      height: 300px;
+      right: -155px;
+      top: 155px;
+    }
+
+    .brand {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      width: fit-content;
+      color: inherit;
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -.5px;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .28);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .14);
+    }
+
+    .brand-mark svg { width: 21px; height: 21px; }
+
+    .welcome-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 360px;
+      margin: auto 0;
+      padding: 70px 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: #d7ddff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    .welcome-copy h1 {
+      margin: 0;
+      font-size: clamp(32px, 4vw, 46px);
+      font-weight: 700;
+      letter-spacing: -1.7px;
+      line-height: 1.12;
+    }
+
+    .welcome-copy > p:last-child {
+      max-width: 330px;
+      margin: 20px 0 0;
+      color: #e0e5ff;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .panel-footer {
+      position: relative;
+      z-index: 1;
+      color: #d7ddff;
+      font-size: 12px;
+    }
+
+    .form-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 56px clamp(32px, 7vw, 76px);
+    }
+
+    .form-content { width: 100%; max-width: 370px; }
+
+    .form-content h2 {
+      margin: 0;
+      color: #17233c;
+      font-size: 30px;
+      letter-spacing: -.9px;
+    }
+
+    .intro {
+      margin: 10px 0 34px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .field { margin-bottom: 20px; }
+
+    .field label {
+      display: block;
+      margin-bottom: 9px;
+      color: #35415a;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .input-wrap { position: relative; }
+
+    .input-wrap input {
+      width: 100%;
+      height: 50px;
+      padding: 0 15px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      background: #fff;
+      color: #17233c;
+      font: inherit;
+      font-size: 14px;
+      transition: border-color .18s, box-shadow .18s;
+    }
+
+    .input-wrap input::placeholder { color: #a0a9ba; }
+
+    .input-wrap input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(66, 99, 235, .12);
+    }
+
+    .password-input { padding-right: 52px !important; }
+
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      display: grid;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      place-items: center;
+      transform: translateY(-50%);
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: #8490a6;
+      cursor: pointer;
+    }
+
+    .password-toggle:hover { background: #f2f4f9; color: #46536c; }
+    .password-toggle:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .password-toggle svg { width: 18px; height: 18px; }
+
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 2px 0 26px;
+      font-size: 12px;
+    }
+
+    .remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #59657b;
+      cursor: pointer;
+    }
+
+    .remember input {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: var(--blue);
+    }
+
+    .text-link {
+      color: var(--blue);
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    .text-link:hover { text-decoration: underline; }
+
+    .submit-button {
+      width: 100%;
+      height: 50px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--blue);
+      box-shadow: 0 7px 14px rgba(66, 99, 235, .2);
+      color: #fff;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .18s, transform .18s, box-shadow .18s;
+    }
+
+    .submit-button:hover {
+      transform: translateY(-1px);
+      background: #3455dc;
+      box-shadow: 0 9px 18px rgba(66, 99, 235, .27);
+    }
+
+    .submit-button:focus-visible { outline: 3px solid rgba(66, 99, 235, .35); outline-offset: 3px; }
+
+    .status-message {
+      min-height: 20px;
+      margin: 13px 0 0;
+      color: #59657b;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .signup {
+      margin: 25px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 740px) {
+      body { padding: 20px 14px; }
+      .login-card { max-width: 500px; min-height: 0; grid-template-columns: 1fr; }
+      .welcome-panel { min-height: 210px; padding: 25px 28px; }
+      .welcome-copy { padding: 36px 0 25px; }
+      .welcome-copy h1 { max-width: 340px; font-size: 32px; }
+      .welcome-copy > p:last-child, .panel-footer { display: none; }
+      .form-panel { padding: 38px 28px 42px; }
+      .intro { margin-bottom: 27px; }
+    }
+
+    @media (max-width: 380px) {
+      .form-options { align-items: flex-start; flex-direction: column; }
+      .form-panel { padding-right: 22px; padding-left: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="login-card">
+    <section class="welcome-panel" aria-label="Despre StudyHub">
+      <a class="brand" href="#" aria-label="StudyHub, pagina principală">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 5.5C6.8 4.7 9.5 5.2 12 7v12c-2.5-1.8-5.2-2.3-8-1.5v-12Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            <path d="M20 5.5c-2.8-.8-5.5-.3-8 1.5v12c2.5-1.8 5.2-2.3 8-1.5v-12Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        StudyHub
+      </a>
+
+      <div class="welcome-copy">
+        <p class="eyebrow">Bine ai revenit</p>
+        <h1>Un loc pentru ideile tale mari.</h1>
+        <p>Conectează-te și continuă să înveți, să creezi și să crești alături de comunitatea ta.</p>
+      </div>
+
+      <p class="panel-footer">Învață împreună. Reușește împreună.</p>
+    </section>
+
+    <section class="form-panel" aria-labelledby="form-title">
+      <div class="form-content">
+        <h2 id="form-title">Autentificare</h2>
+        <p class="intro">Introdu datele contului tău pentru a continua.</p>
+
+        <form id="login-form">
+          <div class="field">
+            <label for="email">Adresa de e-mail</label>
+            <div class="input-wrap">
+              <input id="email" name="email" type="email" autocomplete="username" placeholder="nume@exemplu.ro" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="password">Parolă</label>
+            <div class="input-wrap">
+              <input class="password-input" id="password" name="password" type="password" autocomplete="current-password" placeholder="Introdu parola" required>
+              <button class="password-toggle" id="password-toggle" type="button" aria-label="Afișează parola" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember"><input type="checkbox" name="remember"> Ține-mă minte</label>
+            <a class="text-link" href="#recuperare" id="forgot-password">Ai uitat parola?</a>
+          </div>
+
+          <button class="submit-button" type="submit">Intră în cont</button>
+          <p class="status-message" id="status-message" role="status" aria-live="polite"></p>
+        </form>
+
+        <p class="signup">Nu ai încă un cont? <a class="text-link" href="#inregistrare" id="signup-link">Creează unul</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const passwordInput = document.getElementById("password");
+    const passwordToggle = document.getElementById("password-toggle");
+    const loginForm = document.getElementById("login-form");
+    const statusMessage = document.getElementById("status-message");
+
+    passwordToggle.addEventListener("click", () => {
+      const isVisible = passwordInput.type === "text";
+      passwordInput.type = isVisible ? "password" : "text";
+      passwordToggle.setAttribute("aria-pressed", String(!isVisible));
+      passwordToggle.setAttribute("aria-label", isVisible ? "Afișează parola" : "Ascunde parola");
+    });
+
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      statusMessage.textContent = "Formularul este pregătit pentru conectarea la serviciul de autentificare.";
+    });
+
+    document.getElementById("forgot-password").addEventListener("click", (event) => {
+      event.preventDefault();
+      statusMessage.textContent = "Recuperarea parolei nu este configurată încă.";
+    });
+
+    document.getElementById("signup-link").addEventListener("click", (event) => {
+      event.preventDefault();
+      statusMessage.textContent = "Înregistrarea nu este configurată încă.";
+    });
+  </script>
+</body>
+</html>
