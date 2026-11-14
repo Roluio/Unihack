@@ -1162,3 +1162,125 @@ button svg { width: 19px; height: 19px; }
         grid-template-columns: 1fr;
     }
 }
+ /* =========================================
+   UNIBUDDY - LIBRARY LAYOUT FIX
+   scoate logo-ul dublu + sidebar mov pana sus
+========================================= */
+
+/* Layout general */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* container principal library */
+.library-layout,
+.library-page,
+.drive-layout,
+.drive-page,
+.app-layout,
+.main-layout {
+    min-height: 100vh;
+    align-items: stretch;
+}
+
+/* sidebar-ul din library */
+.sidebar,
+.library-sidebar,
+.drive-sidebar {
+    min-height: 100vh !important;
+    height: 100vh !important;
+    margin-top: 0 !important;
+    padding-top: 22px !important;
+    border-radius: 0 !important;
+    top: 0 !important;
+    align-self: stretch !important;
+    box-sizing: border-box;
+}
+
+/* daca exista un wrapper intern in sidebar */
+.sidebar-inner,
+.library-sidebar-inner,
+.drive-sidebar-inner {
+    min-height: 100%;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* ascunde AL DOILEA logo / brand din sidebar-ul library */
+.sidebar .sidebar-brand,
+.sidebar .brand,
+.sidebar .logo-wrap,
+.sidebar .app-brand,
+.sidebar .sidebar-header,
+.library-sidebar .sidebar-brand,
+.library-sidebar .brand,
+.library-sidebar .logo-wrap,
+.library-sidebar .app-brand,
+.library-sidebar .sidebar-header,
+.drive-sidebar .sidebar-brand,
+.drive-sidebar .brand,
+.drive-sidebar .logo-wrap,
+.drive-sidebar .app-brand,
+.drive-sidebar .sidebar-header {
+    display: none !important;
+}
+
+/* scoate spatiul ramas dupa logo */
+.sidebar nav,
+.sidebar .sidebar-menu,
+.sidebar .menu,
+.sidebar .nav-links,
+.library-sidebar nav,
+.library-sidebar .sidebar-menu,
+.library-sidebar .menu,
+.library-sidebar .nav-links,
+.drive-sidebar nav,
+.drive-sidebar .sidebar-menu,
+.drive-sidebar .menu,
+.drive-sidebar .nav-links {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* primul buton sa urce mai sus */
+.sidebar .new-btn,
+.sidebar .new-button,
+.sidebar .create-btn,
+.library-sidebar .new-btn,
+.library-sidebar .new-button,
+.library-sidebar .create-btn,
+.drive-sidebar .new-btn,
+.drive-sidebar .new-button,
+.drive-sidebar .create-btn {
+    margin-top: 0 !important;
+}
+
+/* continutul din dreapta */
+.main-content,
+.library-main,
+.drive-main,
+.content-area {
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* daca exista bara alba de sus in library */
+.library-topbar,
+.drive-topbar,
+.content-topbar {
+    margin-top: 0 !important;
+}
+
+/* pastreaza DOAR logo-ul principal de sus */
+.topbar .brand,
+.topbar .navbar-brand,
+.main-header .brand,
+.main-header .navbar-brand,
+.global-header .brand,
+.global-header .navbar-brand,
+header .brand,
+header .navbar-brand {
+    display: flex !important;
+    align-items: center;
+}
