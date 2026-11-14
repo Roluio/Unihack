@@ -1,0 +1,23 @@
+# Compiled class file & Maven build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+
+# Variabile de mediu (contine parole si chei secrete)
+.env
+.env.*
+!.env.example
+
+# Fisiere generate automat de VS Code / Eclipse JDT
+.classpath
+.project
+.settings/
+.factorypath
+
+# Alte IDE-uri (in caz ca un coleg foloseste IntelliJ)
+.idea/
+*.iml
+
+# Fisiere de sistem (Windows / macOS)
+.DS_Store
+Thumbs.db
