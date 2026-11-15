@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block page_title %}<span data-i18n="nav.calendar">Calendar</span>{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('calendar.css') }}">{% endblock %}
+{% block content_class %}flush{% endblock %}
+
+{% block topbar_extra %}
+<button type="button" class="btn btn-primary btn-sm" id="addEvent"><i data-lucide="plus"></i><span data-i18n="cal.add">Eveniment</span></button>
+{% endblock %}
+
+{% block content %}
+<div class="cal">
+    <section class="cal-main">
+        <div class="cal-toolbar">
+            <div class="row">
+                <button type="button" class="btn btn-outline btn-sm" id="calToday" data-i18n="cal.today">Azi</button>
+                <button type="button" class="icon-btn" id="calPrev" data-i18n-title="common.previous" title="Anterior"><i data-lucide="chevron-left"></i></button>
+                <button type="button" class="icon-btn" id="calNext" data-i18n-title="common.next" title="Următor"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <h2 id="calTitle"></h2>
+            <div class="spacer"></div>
+            <div class="segmented" id="calViews" role="group">
+                <button type="button" data-view="month" class="active" data-i18n="cal.month">Lună</button>
+                <button type="button" data-view="week" data-i18n="cal.week">Săptămână</button>
+                <button type="button" data-view="agenda" data-i18n="cal.agenda">Agendă</button>
+            </div>
+        </div>
+        <div class="cal-body" id="calBody"></div>
+    </section>
+
+    <aside class="cal-side">
+        <div class="card card-pad">
+            <h2 data-i18n="cal.exams">Examene apropiate</h2>
+            <div id="examList" class="exam-list"></div>
+            <button type="button" class="btn btn-secondary btn-block" id="addExam"><i data-lucide="graduation-cap"></i><span data-i18n="cal.addExam">Programează un examen</span></button>
+        </div>
+        <div class="card card-pad legend">
+            <h2 data-i18n="cal.legend">Tipuri de evenimente</h2>
+            <div class="legend-row"><span class="dot ev-exam"></span><span data-i18n="cal.type.EXAM">Examen</span></div>
+            <div class="legend-row"><span class="dot ev-class"></span><span data-i18n="cal.type.CLASS">Curs</span></div>
+            <div class="legend-row"><span class="dot ev-lab"></span><span data-i18n="cal.type.LAB">Laborator / seminar</span></div>
+            <div class="legend-row"><span class="dot ev-other"></span><span data-i18n="cal.type.OTHER">Altele</span></div>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('calendar.js') }}"></script>{% endblock %}

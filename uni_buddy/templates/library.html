@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Biblioteca{% endblock %}
+{% block page_title %}<span data-i18n="nav.library">Biblioteca</span>{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('drive.css') }}">{% endblock %}
+{% block content_class %}flush{% endblock %}
+
+{% block topbar_extra %}
+<div class="search-box drive-search">
+    <i data-lucide="search"></i>
+    <input type="search" class="input" id="driveSearch" data-i18n-placeholder="lib.search" placeholder="Caută în bibliotecă" maxlength="100">
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="drive" id="drive">
+
+    <aside class="drive-side">
+        <button type="button" class="btn btn-primary btn-lg new-btn" id="newBtn">
+            <i data-lucide="plus"></i><span data-i18n="lib.new">Nou</span>
+        </button>
+
+        <nav class="drive-nav" id="driveNav">
+            <a href="#/files" data-view="files"><i data-lucide="hard-drive"></i><span data-i18n="lib.myLibrary">Biblioteca mea</span></a>
+            <a href="#/recent" data-view="recent"><i data-lucide="clock"></i><span data-i18n="lib.recent">Recente</span></a>
+            <a href="#/starred" data-view="starred"><i data-lucide="star"></i><span data-i18n="lib.starred">Cu stea</span></a>
+            <a href="#/trash" data-view="trash"><i data-lucide="trash-2"></i><span data-i18n="lib.trash">Coș</span></a>
+        </nav>
+
+        <div class="storage">
+            <div class="storage-bar"><div id="storageFill"></div></div>
+            <small id="storageText" class="muted"></small>
+        </div>
+    </aside>
+
+    <section class="drive-main" id="driveMain">
+        <div class="drive-head">
+            <nav class="crumbs" id="crumbs" aria-label="Path"></nav>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-outline btn-sm hidden" id="emptyTrashBtn">
+                <i data-lucide="trash-2"></i><span data-i18n="lib.emptyTrash">Golește coșul</span>
+            </button>
+            <div class="segmented" role="group">
+                <button type="button" id="gridBtn" data-mode="grid" class="active" data-i18n-title="lib.grid" title="Grilă"><i data-lucide="layout-grid"></i></button>
+                <button type="button" id="listBtn" data-mode="list" data-i18n-title="lib.list" title="Listă"><i data-lucide="list"></i></button>
+            </div>
+        </div>
+
+        <div class="drive-scroll" id="driveScroll">
+            <div id="driveContent"></div>
+        </div>
+
+        <div class="drop-overlay hidden" id="dropOverlay">
+            <div><i data-lucide="upload-cloud"></i><strong data-i18n="lib.dropHere">Trage fișierele aici ca să le încarci</strong></div>
+        </div>
+    </section>
+</div>
+
+<input type="file" id="filePicker" multiple class="hidden">
+
+<div class="upload-panel hidden" id="uploadPanel">
+    <div class="upload-head">
+        <strong id="uploadTitle"></strong>
+        <button type="button" class="icon-btn sm" id="uploadClose" data-i18n-title="common.close" title="Închide"><i data-lucide="x"></i></button>
+    </div>
+    <div id="uploadList"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('drive.js') }}"></script>{% endblock %}

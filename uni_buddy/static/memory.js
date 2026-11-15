@@ -1,21 +1,13 @@
 /*
- * Buddy - student memory
+ * StudyGram - Buddy "memory" of the student's files.
  *
- * The student's files live in the browser (IndexedDB / localStorage), so this
- * module scans them and builds a catalog the AI can reason about:
- *
- *   - Library files            (IndexedDB "UniBuddyLibrary" / items)
- *   - Files attached to posts  (IndexedDB "UniBuddyForumFiles_<user>" / files)
- *   - The student's own forum posts, as text (localStorage)
- *
- * Only names and metadata go to the router step; the actual file bytes are
- * uploaded only for the few files the AI decides it needs (or the student pins).
+ * The files live in the student's Library (stored on the server). This module
+ * lists them for Buddy and downloads only the few files the AI decides it needs.
+ * Only names and metadata go to the router step; file bytes are uploaded only
+ * for the files that are actually used.
  */
 (function () {
     "use strict";
-
-    var LIBRARY_DB = "UniBuddyLibrary";
-    var LIBRARY_STORE = "items";
 
     var TEXT_EXT = [
         "txt", "md", "csv", "html", "htm", "py", "js", "ts", "java", "c", "h",
@@ -47,144 +39,26 @@
         return okType && (size || 0) <= MAX_FILE_BYTES;
     }
 
-    function databaseExists(name) {
-        if (!indexedDB.databases) return Promise.resolve(true);
-        return indexedDB.databases().then(function (list) {
-            return list.some(function (db) { return db.name === name; });
-        }).catch(function () { return true; });
-    }
-
-    function openDb(name, store) {
-        return databaseExists(name).then(function (exists) {
-            if (!exists) return null;
-            return new Promise(function (resolve) {
-                var request = indexedDB.open(name);
-                request.onsuccess = function () {
-                    var db = request.result;
-                    if (!db.objectStoreNames.contains(store)) {
-                        db.close();
-                        resolve(null);
-                    } else {
-                        resolve(db);
-                    }
-                };
-                request.onerror = function () { resolve(null); };
-            });
-        });
-    }
-
-    function readAll(db, store) {
-        return new Promise(function (resolve) {
-            var request = db.transaction(store, "readonly").objectStore(store).getAll();
-            request.onsuccess = function () { resolve(request.result || []); };
-            request.onerror = function () { resolve([]); };
-        });
-    }
-
-    function readOne(db, store, key) {
-        return new Promise(function (resolve) {
-            var request = db.transaction(store, "readonly").objectStore(store).get(key);
-            request.onsuccess = function () { resolve(request.result || null); };
-            request.onerror = function () { resolve(null); };
-        });
-    }
-
-    // ------------------------------------------------------------------
-    // Catalog
-    // ------------------------------------------------------------------
-
-    function scanLibrary() {
-        return openDb(LIBRARY_DB, LIBRARY_STORE).then(function (db) {
-            if (!db) return [];
-            return readAll(db, LIBRARY_STORE).then(function (items) {
-                db.close();
-
-                var folders = {};
-                items.forEach(function (item) {
-                    if (item.type === "folder") folders[item.id] = item.name;
-                });
-
-                return items
-                    .filter(function (item) {
-                        return item.type === "file" && !item.trashed && item.blob;
-                    })
-                    .map(function (item) {
-                        return {
-                            key: "lib:" + item.id,
-                            source: "library",
-                            id: item.id,
-                            name: item.name,
-                            mime: mimeFor(item.name, item.mime),
-                            size: item.size || item.blob.size || 0,
-                            folder: item.parentId ? (folders[item.parentId] || "") : "",
-                            createdAt: item.createdAt || 0,
-                            supported: isSupported(item.name, item.size || item.blob.size)
-                        };
-                    });
-            });
-        });
-    }
-
-    function loadPosts(username) {
-        try {
-            var raw = localStorage.getItem("UniBuddyForumDemo_" + username);
-            var posts = raw ? JSON.parse(raw) : [];
-            return Array.isArray(posts) ? posts : [];
-        } catch (e) {
-            return [];
-        }
-    }
-
-    function scanForum(username) {
-        var mine = loadPosts(username).filter(function (post) {
-            return post && post.userId === username;
-        });
-
-        var entries = [];
-
-        mine.forEach(function (post) {
-            var text = [post.title, post.content].filter(Boolean).join("\n\n");
-            if (text.trim()) {
-                entries.push({
-                    key: "post:" + post.id,
-                    source: "forum",
-                    id: post.id,
-                    name: "Postare: " + String(post.title || "fără titlu").slice(0, 80),
-                    mime: "text/plain",
-                    size: text.length,
-                    folder: post.category || "Forum",
-                    createdAt: post.createdAt || 0,
-                    supported: true,
-                    _text: text
-                });
-            }
-
-            (post.attachments || []).forEach(function (attachment) {
-                entries.push({
-                    key: "att:" + attachment.id,
-                    source: "forum",
-                    id: attachment.id,
-                    name: attachment.name,
-                    mime: mimeFor(attachment.name, attachment.type),
-                    size: attachment.size || 0,
-                    folder: "Forum: " + String(post.title || "").slice(0, 40),
-                    createdAt: post.createdAt || 0,
-                    supported: isSupported(attachment.name, attachment.size)
-                });
-            });
-        });
-
-        return entries;
-    }
-
     var cache = [];
 
-    function scan(username) {
-        return Promise.all([scanLibrary(), Promise.resolve(scanForum(username))])
-            .then(function (groups) {
-                cache = groups[0].concat(groups[1]).sort(function (a, b) {
-                    return (b.createdAt || 0) - (a.createdAt || 0);
-                });
+    // Reads the catalog from the server (all non-trashed files of the student).
+    function scan() {
+        return fetch("/api/drive/items?view=all")
+            .then(function (response) { return response.ok ? response.json() : []; })
+            .then(function (items) {
+                cache = (Array.isArray(items) ? items : []).map(function (item) {
+                    return {
+                        key: "lib:" + item.id,
+                        source: "library",
+                        id: item.id,
+                        name: item.name,
+                        mime: mimeFor(item.name, item.mimeType),
+                        size: item.sizeBytes || 0,
+                        folder: item.parentName || "",
+                        createdAt: Date.parse(item.createdAt) || 0,
+                        supported: isSupported(item.name, item.sizeBytes)
+                    };
+                }).sort(function (a, b) { return b.createdAt - a.createdAt; });
                 return cache;
             })
             .catch(function () {
@@ -193,7 +67,7 @@
             });
     }
 
-    // What the server receives: metadata only (no bytes, no private text).
+    // What the AI router receives: metadata only (no bytes).
     function catalog() {
         return cache.map(function (item) {
             return {
@@ -203,35 +77,13 @@
         });
     }
 
-    // ------------------------------------------------------------------
-    // Reading file bytes
-    // ------------------------------------------------------------------
-
-    function getBlob(item, username) {
-        if (item._text !== undefined) {
-            return Promise.resolve(new File([item._text], item.name + ".txt", { type: "text/plain" }));
-        }
-
-        if (item.source === "library") {
-            return openDb(LIBRARY_DB, LIBRARY_STORE).then(function (db) {
-                if (!db) return null;
-                return readOne(db, LIBRARY_STORE, item.id).then(function (record) {
-                    db.close();
-                    if (!record || !record.blob) return null;
-                    return new File([record.blob], item.name, { type: item.mime });
-                });
-            });
-        }
-
-        var dbName = "UniBuddyForumFiles_" + username;
-        return openDb(dbName, "files").then(function (db) {
-            if (!db) return null;
-            return readOne(db, "files", item.id).then(function (blob) {
-                db.close();
-                if (!blob) return null;
-                return new File([blob], item.name, { type: item.mime });
-            });
-        });
+    function getBlob(item) {
+        return fetch("/api/drive/files/" + encodeURIComponent(item.id) + "/content?download=true")
+            .then(function (response) { return response.ok ? response.blob() : null; })
+            .then(function (blob) {
+                return blob ? new File([blob], item.name, { type: item.mime }) : null;
+            })
+            .catch(function () { return null; });
     }
 
     function byKey(key) {
@@ -239,8 +91,8 @@
         return null;
     }
 
-    // keys -> [File] (skips unsupported / missing files, keeps total under limit)
-    function filesFor(keys, username) {
+    // keys -> [File] (skips unsupported / missing files, keeps the total under the limit)
+    function filesFor(keys) {
         var budget = 20 * 1024 * 1024;
 
         return keys.reduce(function (chain, key) {
@@ -248,7 +100,7 @@
                 var item = byKey(key);
                 if (!item || !item.supported || acc.length >= 4) return acc;
 
-                return getBlob(item, username).then(function (file) {
+                return getBlob(item).then(function (file) {
                     if (file && file.size <= budget) {
                         budget -= file.size;
                         acc.push(file);

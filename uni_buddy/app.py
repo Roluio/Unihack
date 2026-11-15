@@ -1,9 +1,11 @@
 import os
+import secrets
 import time
 
 import requests
 from flask import (
     Flask,
+    Response,
     render_template,
     request,
     jsonify,
@@ -16,42 +18,72 @@ import gemini_service as ai
 
 app = Flask(__name__)
 
-# Max upload for AI documents (several files per request): 32 MB
-app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
+# Uploads: the Library and forum accept files up to 25 MB, several per request.
+app.config["MAX_CONTENT_LENGTH"] = 80 * 1024 * 1024
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
 
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "unibuddy_development_secret")
+def load_secret_key():
+    """FLASK_SECRET_KEY if set, otherwise a random key generated once and kept in instance/secret_key."""
+    from_env = os.environ.get("FLASK_SECRET_KEY")
+    if from_env:
+        return from_env
+    path = os.path.join(app.instance_path, "secret_key")
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+    os.makedirs(app.instance_path, exist_ok=True)
+    key = secrets.token_hex(32)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(key)
+    return key
+
+
+app.secret_key = load_secret_key()
 
 BACKEND_URL = os.environ.get("STUDYHUB_BACKEND_URL", "http://localhost:8080/api")
 
-BACKEND_DOWN = "Backend-ul Java (port 8080) nu răspunde. Pornește Spring Boot!"
+BACKEND_DOWN = "Serviciul nu este disponibil momentan. Încearcă din nou în câteva momente."
+
+# Changes on every start, so browsers fetch fresh CSS/JS after an update.
+ASSET_VERSION = str(int(time.time()))
+
+
+@app.context_processor
+def inject_helpers():
+    def asset(filename):
+        return url_for("static", filename=filename, v=ASSET_VERSION)
+    return {"asset": asset}
 
 
 def auth_headers():
     token = session.get("access_token")
     if not token:
         return {}
-    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    return {"Authorization": f"Bearer {token}"}
 
 
 def map_backend_profile(profile_data):
     first = (profile_data.get("firstName") or "").strip()
     last = (profile_data.get("lastName") or "").strip()
-    full_name = f"{first} {last}".strip() or profile_data.get("username") or ""
+    username = profile_data.get("username") or ""
+    full_name = f"{first} {last}".strip() or username
+    initials = ((first[:1] + last[:1]) or username[:1]).upper()
     return {
         "id": profile_data.get("id") or "",
-        "username": profile_data.get("username") or "",
+        "username": username,
         "email": profile_data.get("email") or "",
         "full_name": full_name,
         "firstName": first,
         "lastName": last,
-        "university": profile_data.get("university") or "Universitatea Politehnica Timisoara",
+        "initials": initials,
+        "university": profile_data.get("university") or "",
         "faculty": profile_data.get("faculty") or "",
-        "specialization": profile_data.get("specialization") or "Informatica",
-        "year": str(profile_data.get("studyYear") or ""),
+        "specialization": profile_data.get("specialization") or "",
+        "studyYear": profile_data.get("studyYear") or 1,
         "bio": profile_data.get("bio") or "",
-        "preferredLanguage": profile_data.get("preferredLanguage") or "RO",
-        "private_account": session.get("private_account", False),
-        "email_notifications": session.get("email_notifications", True)
+        "preferredLanguage": (profile_data.get("preferredLanguage") or "RO").upper(),
+        "createdAt": profile_data.get("createdAt") or "",
     }
 
 
@@ -77,15 +109,22 @@ def refresh_access_token():
     return False
 
 
-def backend_request(method, path, **kwargs):
+def backend_request(method, path, headers=None, **kwargs):
     """Call Spring Boot with the user's JWT; refresh the token once on 401.
 
     Raises requests.RequestException when the backend is unreachable.
     """
     kwargs.setdefault("timeout", 5)
-    resp = requests.request(method, f"{BACKEND_URL}{path}", headers=auth_headers(), **kwargs)
+
+    def send():
+        merged = auth_headers()
+        merged.update(headers or {})
+        return requests.request(method, f"{BACKEND_URL}{path}", headers=merged, **kwargs)
+
+    resp = send()
     if resp.status_code == 401 and refresh_access_token():
-        resp = requests.request(method, f"{BACKEND_URL}{path}", headers=auth_headers(), **kwargs)
+        resp.close()
+        resp = send()
     return resp
 
 
@@ -112,8 +151,23 @@ def fetch_current_user():
     return None, None
 
 
+def render_app(template, active, **context):
+    """Render a logged-in page, or send the visitor to the login page."""
+    username, user = fetch_current_user()
+    if not user:
+        return redirect(url_for("index"))
+    return render_template(template, username=username, user=user, active=active, **context)
+
+
+def error_message(body, fallback):
+    msg = body.get("message") if isinstance(body, dict) else None
+    if not msg and isinstance(body, dict) and isinstance(body.get("validationErrors"), dict):
+        msg = next(iter(body["validationErrors"].values()), None)
+    return msg or fallback
+
+
 # ==========================================
-# PAGINI HTML
+# PAGES
 # ==========================================
 
 @app.route("/")
@@ -126,64 +180,27 @@ def index():
 
 @app.route("/home")
 def home_feed():
-    username, user = fetch_current_user()
-    if not user:
-        return redirect(url_for("index"))
-    return render_template("home.html", username=username, user=user)
-
-
-@app.route("/profile")
-def profile():
-    username, user = fetch_current_user()
-    if not user:
-        return redirect(url_for("index"))
-    return render_template("profile.html", username=username, user=user)
+    return render_app("home.html", "home")
 
 
 @app.route("/library")
 def library():
-    username, user = fetch_current_user()
-    if not user:
-        return redirect(url_for("index"))
-    return render_template(
-        "module_frame.html",
-        username=username,
-        user=user,
-        module_title="Library",
-        module_name="library",
-        module_file="modules/library/index.html"
-    )
+    return render_app("library.html", "library")
+
+
+@app.route("/calendar")
+def calendar_page():
+    return render_app("calendar.html", "calendar")
 
 
 @app.route("/messages")
 def messages():
-    username, user = fetch_current_user()
-    if not user:
-        return redirect(url_for("index"))
-    return render_template(
-        "module_frame.html",
-        username=username,
-        user=user,
-        module_title="Messages",
-        module_name="messages",
-        module_file="modules/messages/messages.html"
-    )
+    return render_app("messages.html", "messages")
 
 
 @app.route("/friends")
 def friends():
-    username, user = fetch_current_user()
-    if not user:
-        return redirect(url_for("index"))
-    return redirect(url_for("profile") + "#friends")
-
-
-@app.route("/notifications")
-def notifications():
-    username, user = fetch_current_user()
-    if not user:
-        return redirect(url_for("index"))
-    return redirect(url_for("profile") + "#notifications")
+    return render_app("friends.html", "friends")
 
 
 @app.route("/search")
@@ -191,7 +208,17 @@ def search():
     username, user = fetch_current_user()
     if not user:
         return redirect(url_for("index"))
-    return redirect(url_for("profile") + "#search")
+    return redirect(url_for("friends") + "#find")
+
+
+@app.route("/notifications")
+def notifications():
+    return render_app("notifications.html", "notifications")
+
+
+@app.route("/profile")
+def profile():
+    return render_app("profile.html", "profile")
 
 
 @app.route("/logout")
@@ -214,31 +241,39 @@ def logout():
 # AUTH API -> SPRING BOOT
 # ==========================================
 
+def start_session(body, fallback_username):
+    """Store the tokens of a fresh login. Nothing from a previous account survives."""
+    session.clear()
+    session["access_token"] = body["accessToken"]
+    session["refresh_token"] = body.get("refreshToken", "")
+    session["username"] = body.get("username", fallback_username)
+    username, user = fetch_current_user()
+    return user
+
+
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
-    email_or_user = str(data.get("username", "")).strip()
+    email = str(data.get("username", "")).strip()
     password = str(data.get("password", "")).strip()
 
-    if not email_or_user or not password:
+    if not email or not password:
         return jsonify({"success": False, "message": "Completează toate câmpurile."}), 400
 
     try:
         resp = requests.post(
             f"{BACKEND_URL}/auth/login",
-            json={"email": email_or_user, "password": password},
+            json={"email": email, "password": password},
             timeout=5
         )
         body = resp.json() if resp.content else {}
 
         if resp.status_code == 200 and "accessToken" in body:
-            session["access_token"] = body["accessToken"]
-            session["refresh_token"] = body.get("refreshToken", "")
-            session["username"] = body.get("username", email_or_user)
-            fetch_current_user()
+            user = start_session(body, email)
             return jsonify({
                 "success": True,
-                "message": f"Bine ai revenit, {session['username']}!",
+                "message": "Bine ai revenit!",
+                "language": (user or {}).get("preferredLanguage", "RO").lower(),
                 "redirect": "/home"
             })
 
@@ -246,21 +281,34 @@ def login():
         return jsonify({"success": False, "message": msg}), resp.status_code
 
     except requests.RequestException:
-        return jsonify({
-            "success": False,
-            "message": BACKEND_DOWN
-        }), 503
+        return jsonify({"success": False, "message": BACKEND_DOWN}), 503
 
 
 @app.route("/api/signup", methods=["POST"])
 def signup():
     data = request.get_json(silent=True) or {}
-    username = str(data.get("username", "")).strip()
-    email = str(data.get("email", "")).strip()
+
+    def field(name, limit=200):
+        # collapse repeated spaces so "Automatica  si Calculatoare" matches the same faculty
+        return " ".join(str(data.get(name, "")).split())[:limit]
+
+    first_name = field("firstName", 100)
+    last_name = field("lastName", 100)
+    username = field("username", 50)
+    email = field("email", 255)
     password = str(data.get("password", "")).strip()
     confirm_password = str(data.get("confirmPassword", "")).strip()
+    university = field("university")
+    faculty = field("faculty")
+    specialization = field("specialization")
+    try:
+        study_year = int(data.get("studyYear"))
+    except (TypeError, ValueError):
+        study_year = 0
 
-    if not all([username, email, password, confirm_password]):
+    required = [first_name, last_name, username, email, password, confirm_password,
+                university, faculty, specialization]
+    if not all(required):
         return jsonify({"success": False, "message": "Completează toate câmpurile."}), 400
 
     if password != confirm_password:
@@ -269,42 +317,37 @@ def signup():
     if len(password) < 8:
         return jsonify({"success": False, "message": "Parola trebuie să aibă minim 8 caractere."}), 400
 
-    parts = [p for p in username.replace(".", " ").replace("_", " ").split() if p]
-    first_name = parts[0].capitalize() if len(parts) >= 1 else "Student"
-    last_name = parts[1].capitalize() if len(parts) >= 2 else "StudyHub"
+    if not 1 <= study_year <= 6:
+        return jsonify({"success": False, "message": "Anul de studiu trebuie să fie între 1 și 6."}), 400
 
     payload = {
-        "firstName": first_name if len(first_name) >= 2 else "Student",
-        "lastName": last_name if len(last_name) >= 2 else "StudyHub",
+        "firstName": first_name,
+        "lastName": last_name,
         "username": username,
         "email": email,
         "password": password,
-        "university": "Universitatea Politehnica Timisoara",
-        "faculty": "Automatica si Calculatoare",
-        "specialization": "Informatica",
-        "studyYear": 1
+        "university": university,
+        "faculty": faculty,
+        "specialization": specialization,
+        "studyYear": study_year
     }
 
     try:
         resp = requests.post(f"{BACKEND_URL}/auth/register", json=payload, timeout=5)
         body = resp.json() if resp.content else {}
 
-        if resp.status_code in (200, 201):
+        if resp.status_code in (200, 201) and "accessToken" in body:
+            start_session(body, username)
             return jsonify({
                 "success": True,
-                "message": "Cont creat cu succes! Te poți autentifica acum cu email-ul."
+                "message": "Cont creat cu succes!",
+                "redirect": "/home"
             })
 
-        msg = body.get("message")
-        if not msg and isinstance(body.get("validationErrors"), dict):
-            msg = next(iter(body["validationErrors"].values()))
-        return jsonify({"success": False, "message": msg or "Eroare la înregistrare."}), resp.status_code
+        return jsonify({"success": False, "message": error_message(body, "Eroare la înregistrare.")}), resp.status_code
 
     except requests.RequestException:
-        return jsonify({
-            "success": False,
-            "message": BACKEND_DOWN
-        }), 503
+        return jsonify({"success": False, "message": BACKEND_DOWN}), 503
 
 
 # ==========================================
@@ -319,41 +362,29 @@ def update_profile():
 
     data = request.get_json(silent=True) or {}
 
-    # Limits (Spring Boot enforces its own as well)
-    full_name = str(data.get("full_name", current["full_name"])).strip()[:80]
-    faculty = str(data.get("faculty", current["faculty"])).strip()[:120] or "Automatica si Calculatoare"
-    raw_year = str(data.get("year", current["year"])).strip()[:30]
-    bio = str(data.get("bio", current["bio"])).strip()[:500]
-    lang = str(data.get("preferredLanguage", current.get("preferredLanguage", "RO"))).upper()
+    def text(name, limit):
+        value = str(data.get(name, current.get(name) or ""))
+        return (value.strip() if name == "bio" else " ".join(value.split()))[:limit]
+
+    try:
+        study_year = int(data.get("studyYear", current["studyYear"]))
+    except (TypeError, ValueError):
+        study_year = current["studyYear"]
+
+    lang = str(data.get("preferredLanguage", current["preferredLanguage"])).upper()
     if lang not in ("RO", "EN"):
         lang = "RO"
 
-    # The email belongs to the account in Spring Boot and cannot be edited here:
-    # any "email" sent by the form is ignored and the real one is returned.
-
-    if "full_name" in data and not full_name:
-        return jsonify({"success": False, "message": "Numele nu poate fi gol."}), 400
-
-    name_parts = full_name.split(" ", 1)
-    first_name = name_parts[0] if len(name_parts[0]) >= 2 else current["firstName"]
-    last_name = (
-        name_parts[1].strip()
-        if len(name_parts) > 1 and len(name_parts[1].strip()) >= 2
-        else (current["lastName"] or "Student")
-    )
-
-    study_year = int("".join(ch for ch in raw_year if ch.isdigit())[:1] or "1")
-    study_year = max(1, min(6, study_year))
-
+    # The username and the email belong to the account and are not edited here.
     payload = {
-        "firstName": first_name,
-        "lastName": last_name,
+        "firstName": text("firstName", 100),
+        "lastName": text("lastName", 100),
         "username": current["username"],
         "profilePictureUrl": None,
-        "bio": bio,
-        "university": current.get("university") or "Universitatea Politehnica Timisoara",
-        "faculty": faculty,
-        "specialization": current.get("specialization") or "Informatica",
+        "bio": text("bio", 1000),
+        "university": text("university", 200),
+        "faculty": text("faculty", 200),
+        "specialization": text("specialization", 200),
         "studyYear": study_year,
         "preferredLanguage": lang
     }
@@ -367,10 +398,7 @@ def update_profile():
             session["user_cache"] = updated_user
             return jsonify({"success": True, "user": updated_user})
 
-        msg = body.get("message")
-        if not msg and isinstance(body.get("validationErrors"), dict):
-            msg = next(iter(body["validationErrors"].values()), None)
-        return jsonify({"success": False, "message": msg or "Eroare la salvare."}), resp.status_code
+        return jsonify({"success": False, "message": error_message(body, "Eroare la salvare.")}), resp.status_code
     except (requests.RequestException, ValueError):
         return jsonify({"success": False, "message": BACKEND_DOWN}), 503
 
@@ -381,84 +409,95 @@ def change_password():
     if not user:
         return jsonify({"success": False, "message": "Neautorizat."}), 401
 
-    # Spring Boot has no change-password endpoint yet (accounts live only there).
-    return jsonify({
-        "success": False,
-        "message": "Schimbarea parolei nu este disponibilă încă în backend."
-    }), 501
-
-
-@app.route("/api/profile/settings", methods=["POST"])
-def update_settings():
-    username, user = fetch_current_user()
-    if not user:
-        return jsonify({"success": False}), 401
-
     data = request.get_json(silent=True) or {}
-    if isinstance(data.get("private_account"), bool):
-        session["private_account"] = data["private_account"]
-    if isinstance(data.get("email_notifications"), bool):
-        session["email_notifications"] = data["email_notifications"]
-    return jsonify({"success": True})
+    current = str(data.get("currentPassword", ""))
+    new = str(data.get("newPassword", ""))
+    confirm = str(data.get("confirmPassword", ""))
 
+    if not current or not new:
+        return jsonify({"success": False, "message": "Completează toate câmpurile."}), 400
+    if new != confirm:
+        return jsonify({"success": False, "message": "Parolele noi nu coincid."}), 400
 
-# ==========================================
-# SEARCH & FRIENDS API -> SPRING BOOT
-# ==========================================
-
-def proxy(method, path, empty, **kwargs):
-    """Forward a call to Spring Boot. `empty` ([] or {}) is the fallback body on errors."""
-    is_list = isinstance(empty, list)
-
-    if not session.get("access_token"):
-        return jsonify(empty if is_list else {"message": "Neautorizat"}), 401
     try:
-        resp = backend_request(method, path, **kwargs)
-        try:
-            body = resp.json() if resp.content else {}
-        except ValueError:
-            body = {}
-        if is_list and resp.status_code != 200:
-            body = empty
-        return jsonify(body), resp.status_code
+        resp = backend_request("PUT", "/users/me/password",
+                               json={"currentPassword": current, "newPassword": new})
+        body = resp.json() if resp.content else {}
+        if resp.status_code == 200:
+            return jsonify({"success": True, "message": "Parola a fost schimbată."})
+        return jsonify({"success": False, "message": error_message(body, "Parola nu a putut fi schimbată.")}), resp.status_code
+    except (requests.RequestException, ValueError):
+        return jsonify({"success": False, "message": BACKEND_DOWN}), 503
+
+
+@app.route("/api/catalog")
+def catalog():
+    """Universities and faculties already used (suggestions on the sign-up form)."""
+    try:
+        resp = requests.get(f"{BACKEND_URL}/auth/catalog", timeout=5)
+        return jsonify(resp.json()), resp.status_code
+    except (requests.RequestException, ValueError):
+        return jsonify({"universities": [], "faculties": []})
+
+
+# ==========================================
+# FORUM, MESSAGES, LIBRARY, FRIENDS, NOTIFICATIONS -> SPRING BOOT
+# ==========================================
+
+FORWARDED_HEADERS = (
+    "Content-Type", "Content-Disposition", "Content-Length",
+    "Content-Range", "Accept-Ranges", "X-Content-Type-Options"
+)
+
+AREAS = "posts,conversations,drive,notifications,friends,users,calendar"
+
+
+@app.route("/api/<any(posts,conversations,drive,notifications,friends,users,calendar):area>",
+           defaults={"rest": ""},
+           methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+@app.route("/api/<any(posts,conversations,drive,notifications,friends,users,calendar):area>/<path:rest>",
+           methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+def api_proxy(area, rest):
+    """Forward the browser's call to Spring Boot with the user's JWT.
+
+    JSON, multipart uploads and file downloads (streamed, with Range support)
+    all pass through unchanged.
+    """
+    if not session.get("access_token"):
+        return jsonify({"message": "Neautorizat."}), 401
+
+    path = f"/{area}" + (f"/{rest}" if rest else "")
+    kwargs = {"params": request.args.to_dict(flat=False), "stream": True, "timeout": (5, 300)}
+    headers = {}
+
+    if request.mimetype == "multipart/form-data":
+        kwargs["files"] = [
+            (key, (f.filename, f.read(), f.mimetype or "application/octet-stream"))
+            for key in request.files
+            for f in request.files.getlist(key)
+        ]
+        kwargs["data"] = [(k, v) for k in request.form for v in request.form.getlist(k)]
+    elif request.is_json:
+        kwargs["json"] = request.get_json(silent=True)
+    elif request.data:
+        kwargs["data"] = request.get_data()
+        headers["Content-Type"] = request.content_type or "application/octet-stream"
+
+    if request.headers.get("Range"):
+        headers["Range"] = request.headers["Range"]
+
+    try:
+        resp = backend_request(request.method, path, headers=headers, **kwargs)
     except requests.RequestException:
-        return jsonify(empty if is_list else {"message": BACKEND_DOWN}), 503
+        return jsonify({"message": BACKEND_DOWN}), 503
 
+    out_headers = {name: resp.headers[name] for name in FORWARDED_HEADERS if name in resp.headers}
+    if resp.headers.get("Content-Encoding"):
+        out_headers.pop("Content-Length", None)
 
-@app.route("/api/users/search")
-def proxy_search_users():
-    q = request.args.get("query", "").strip()
-    return proxy("GET", "/users/search", [], params={"query": q} if q else {})
-
-
-@app.route("/api/friends")
-def proxy_friends():
-    return proxy("GET", "/friends", [])
-
-
-@app.route("/api/friends/requests/received")
-def proxy_received_requests():
-    return proxy("GET", "/friends/requests/received", [])
-
-
-@app.route("/api/friends/request/<receiver_id>", methods=["POST"])
-def proxy_send_request(receiver_id):
-    return proxy("POST", f"/friends/request/{receiver_id}", {})
-
-
-@app.route("/api/friends/accept/<request_id>", methods=["POST"])
-def proxy_accept_request(request_id):
-    return proxy("POST", f"/friends/accept/{request_id}", {})
-
-
-@app.route("/api/friends/reject/<request_id>", methods=["POST"])
-def proxy_reject_request(request_id):
-    return proxy("POST", f"/friends/reject/{request_id}", {})
-
-
-@app.route("/api/friends/<friend_id>", methods=["DELETE"])
-def proxy_remove_friend(friend_id):
-    return proxy("DELETE", f"/friends/{friend_id}", {})
+    response = Response(resp.iter_content(65536), status=resp.status_code, headers=out_headers)
+    response.call_on_close(resp.close)
+    return response
 
 
 # ==========================================
@@ -746,4 +785,8 @@ def too_large(error):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(
+        host=os.environ.get("FLASK_HOST", "127.0.0.1"),
+        port=int(os.environ.get("FLASK_PORT", "5000")),
+        debug=os.environ.get("FLASK_DEBUG", "0") == "1"
+    )
