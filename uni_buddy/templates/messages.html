@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Mesaje{% endblock %}
+{% block page_title %}<span data-i18n="nav.messages">Mesaje</span>{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('messages.css') }}">{% endblock %}
+{% block content_class %}flush{% endblock %}
+
+{% block content %}
+<div class="msgs" id="msgs">
+
+    <aside class="conv-pane">
+        <div class="conv-head">
+            <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="search" class="input" id="convSearch" data-i18n-placeholder="msg.search" placeholder="Caută conversații" maxlength="60">
+            </div>
+            <button type="button" class="icon-btn" id="newChat" data-i18n-title="msg.new" title="Conversație nouă">
+                <i data-lucide="square-pen"></i>
+            </button>
+        </div>
+        <div class="conv-list" id="convList"></div>
+    </aside>
+
+    <section class="chat-pane">
+        <div class="chat-empty" id="chatEmpty">
+            <div class="empty-icon"><i data-lucide="message-circle"></i></div>
+            <h3 data-i18n="msg.pickTitle">Mesajele tale</h3>
+            <p class="muted" data-i18n="msg.pickText">Alege o conversație sau începe una nouă cu un prieten.</p>
+            <button type="button" class="btn btn-primary" id="newChat2"><i data-lucide="square-pen"></i><span data-i18n="msg.new">Conversație nouă</span></button>
+        </div>
+
+        <div class="chat hidden" id="chat">
+            <header class="chat-header">
+                <button type="button" class="icon-btn back-btn" id="chatBack" data-i18n-title="common.back" title="Înapoi"><i data-lucide="arrow-left"></i></button>
+                <div id="chatAvatar"></div>
+                <div class="chat-title">
+                    <strong id="chatName"></strong>
+                    <small id="chatSub" class="muted"></small>
+                </div>
+                <button type="button" class="icon-btn" id="chatMenu" data-i18n-title="common.more" title="Mai multe"><i data-lucide="ellipsis-vertical"></i></button>
+            </header>
+
+            <div class="chat-body" id="chatBody"></div>
+
+            <form class="composer-bar" id="msgForm">
+                <textarea class="textarea" id="msgInput" rows="1" maxlength="4000" data-i18n-placeholder="msg.placeholder" placeholder="Scrie un mesaj..."></textarea>
+                <button type="submit" class="btn btn-primary send-btn" id="sendBtn" data-i18n-title="common.send" title="Trimite"><i data-lucide="send"></i></button>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('messages.js') }}"></script>{% endblock %}

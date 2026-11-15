@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Prieteni{% endblock %}
+{% block page_title %}<span data-i18n="nav.friends">Prieteni</span>{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('pages.css') }}">{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="tabs" id="friendTabs" role="tablist">
+        <button type="button" data-tab="friends" class="active"><i data-lucide="users-round"></i><span data-i18n="friends.tabFriends">Prietenii mei</span> <span class="chip" id="friendCount">0</span></button>
+        <button type="button" data-tab="requests"><i data-lucide="user-round-check"></i><span data-i18n="friends.tabRequests">Cereri</span> <span class="badge hidden" id="requestCount"></span></button>
+        <button type="button" data-tab="find"><i data-lucide="search"></i><span data-i18n="friends.tabFind">Găsește studenți</span></button>
+    </div>
+
+    <section id="tab-friends" class="tab-panel"></section>
+
+    <section id="tab-requests" class="tab-panel hidden"></section>
+
+    <section id="tab-find" class="tab-panel hidden">
+        <div class="search-box find-box">
+            <i data-lucide="search"></i>
+            <input type="search" class="input" id="findInput" data-i18n-placeholder="friends.searchPlaceholder" placeholder="Caută după nume sau username" maxlength="60">
+        </div>
+        <h2 class="section-h" id="findTitle"></h2>
+        <div id="findResults" class="people-grid"></div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('friends.js') }}"></script>{% endblock %}

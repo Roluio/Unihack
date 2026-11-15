@@ -1,0 +1,158 @@
+/* =====================================================================
+   StudyGram - shared theme layer (loaded LAST on every page)
+   1. logo images   2. theme toggle   3. full-height sidebar   4. dark mode
+   ===================================================================== */
+
+/* ---------- 1. Logo image (replaces star / sparkle icons) ---------- */
+
+.sg-logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.sg-logo-box,
+.logo-icon,
+.brand-logo,
+.brand-icon,
+.topbar-icon,
+.welcome-logo,
+.ai-logo,
+.message-avatar:has(> .sg-logo) {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    overflow: visible;
+}
+
+.logo-icon, .brand-logo, .brand-icon { width: 44px !important; height: 44px !important; flex-shrink: 0; }
+.topbar-icon { width: 42px !important; height: 42px !important; }
+.welcome-logo { width: 96px !important; height: 96px !important; margin-left: auto; margin-right: auto; }
+.ai-logo { width: 38px !important; height: 38px !important; }
+.message-avatar:has(> .sg-logo) { width: 36px !important; height: 36px !important; flex-shrink: 0; }
+
+.ai-toggle .sg-logo,
+.forum-tip > .sg-logo { width: 22px; height: 22px; display: inline-block; flex-shrink: 0; }
+.forum-tip > .sg-logo { width: 36px; height: 36px; margin-bottom: 8px; }
+
+/* floating "BUDDY" button is now the logo only */
+.ai-toggle.buddy-floating,
+.buddy-btn {
+    width: 64px;
+    height: 64px;
+    padding: 6px !important;
+    border-radius: 50% !important;
+    justify-content: center;
+    background: var(--white, #fff) !important;
+    border: 1px solid var(--border, #e9e5f0) !important;
+    box-shadow: 0 8px 24px rgba(57, 13, 108, .22) !important;
+}
+
+.ai-toggle.buddy-floating:hover,
+.buddy-btn:hover {
+    transform: translateY(-3px) scale(1.04);
+    background: var(--white, #fff) !important;
+}
+
+.ai-toggle.buddy-floating .sg-logo,
+.buddy-btn .sg-logo { width: 100%; height: 100%; }
+
+/* ---------- 2. Theme toggle button ---------- */
+
+.sg-theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    padding: 0;
+    border: 1px solid var(--border, #e9e5f0);
+    border-radius: 12px;
+    background: var(--white, #fff);
+    color: var(--purple, #54218e);
+    cursor: pointer;
+    transition: background .2s, transform .2s, border-color .2s;
+}
+
+.sg-theme-toggle:hover { transform: translateY(-1px); border-color: var(--purple, #54218e); }
+.sg-theme-toggle svg { width: 19px; height: 19px; display: block; }
+/* the icon shows the mode you will switch TO */
+.sg-theme-toggle .sg-sun { display: none; }
+
+:root[data-theme="dark"] .sg-theme-toggle .sg-sun { display: block; }
+:root[data-theme="dark"] .sg-theme-toggle .sg-moon { display: none; }
+
+.sg-theme-toggle.sg-floating {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+}
+
+/* ---------- 3. Purple sidebar always spans the full height ---------- */
+
+html, body { min-height: 100%; }
+
+.app > .sidebar,
+.app-shell > .sidebar,
+body > .sidebar {
+    position: sticky !important;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 0;
+    scrollbar-width: none;
+}
+
+.app > .sidebar::-webkit-scrollbar { display: none; }
+
+/* top bars stay visible too */
+.main-content > .topbar,
+.main-content > header.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+/* ---------- 4. Dark mode (generated overrides come from theme-dark.css) ---------- */
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --background: #0f0b17;
+    --white: #1a1425;
+    --text: #ece7f6;
+    --muted: #a699bd;
+    --border: #30264a;
+    --shadow: 0 5px 20px rgba(0, 0, 0, .45);
+
+    /* brand colours are used for text / accents, so they are light here.
+       Solid purple backgrounds are set in theme-dark.css (generated). */
+    --purple: #a98bff;
+    --purple-dark: #cbb6ff;
+    --purple-light: #b697fb;
+    --purple-pale: #2a1f44;
+
+    /* alternative variable names used by some modules */
+    --dark: #cbb6ff;
+    --lavender: #b697fb;
+    --pale: #2a1f44;
+    --dark-purple: #cbb6ff;
+    --light-purple: #b697fb;
+    --pale-purple: #2a1f44;
+}
+
+:root[data-theme="dark"] body {
+    background: var(--background);
+    color: var(--text);
+}
+
+/* login page: toggle sits next to the language menu, on the right */
+.top-bar > .sg-theme-toggle { margin-left: auto; }

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Notificări{% endblock %}
+{% block page_title %}<span data-i18n="nav.notifications">Notificări</span>{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('pages.css') }}">{% endblock %}
+
+{% block topbar_extra %}
+<button type="button" class="btn btn-outline btn-sm" id="markSeen"><i data-lucide="check-check"></i><span data-i18n="notif.markRead">Marchează ca citite</span></button>
+{% endblock %}
+
+{% block content %}
+<div class="page narrow">
+    <div class="card notif-card" id="notifList"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('notifications.js') }}"></script>{% endblock %}

@@ -1,411 +1,66 @@
-
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>UniBuddy - Student Forum</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='profile.css') }}">
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='forum.css') }}">
-
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-</head>
-
-<body>
-
-<div class="app">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-        <div class="logo">
-            <div class="logo-icon">
-                <i data-lucide="sparkles"></i>
-            </div>
-            <span>UniBuddy</span>
-        </div>
-
-        <nav class="navigation">
-
-            <a href="/home" class="nav-item active">
-                <span class="nav-icon">
-                    <i data-lucide="house"></i>
-                </span>
-                <span data-i18n="navHome">Acasă</span>
-            </a>
-
-            <a href="/profile" class="nav-item">
-                <span class="nav-icon">
-                    <i data-lucide="user-round"></i>
-                </span>
-                <span data-i18n="navProfile">Profilul meu</span>
-            </a>
-
-            <a href="/library" class="nav-item">
-                <span class="nav-icon">
-                    <i data-lucide="folder-open"></i>
-                </span>
-                <span data-i18n="navPosts">Postările mele</span>
-            </a>
-
-            <a href="/messages" class="nav-item">
-                <span class="nav-icon">
-                    <i data-lucide="message-circle"></i>
-                </span>
-                <span data-i18n="navMessages">Mesaje</span>
-            </a>
-
-            <a href="/notifications" class="nav-item">
-                <span class="nav-icon">
-                    <i data-lucide="bell"></i>
-                </span>
-                <span data-i18n="navNotifications">Notificări</span>
-            </a>
-
-            <a href="/search" class="nav-item">
-                <span class="nav-icon">
-                    <i data-lucide="search"></i>
-                </span>
-                <span data-i18n="navSearch">Căutare</span>
-            </a>
-
-            <a href="/friends" class="nav-item">
-                <span class="nav-icon">
-                    <i data-lucide="users-round"></i>
-                </span>
-                <span data-i18n="navFriends">Prieteni</span>
-            </a>
-
-        </nav>
-
-        <div class="sidebar-bottom">
-            <div class="profile">
-
-                <div class="avatar">
-                    {{ username[0]|upper }}
-                </div>
-
-                <div class="profile-info">
-                    <strong>{{ user.full_name }}</strong>
-                    <span>@{{ username }}</span>
-                </div>
-
-            </div>
-        </div>
-
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-
-        <header class="topbar">
-            <div class="top-actions">
-
-                <div class="language-dropdown"
-                     id="langDropdown">
-
-                    <button type="button"
-                            id="langMenuBtn"
-                            class="lang-btn">
-                        <span data-i18n="langLabel">
-                            LIMBĂ
-                        </span>
-                        <span class="arrow">▾</span>
-                    </button>
-
-                    <ul id="langOptions"
-                        class="lang-options hidden">
-
-                        <li>
-                            <button type="button"
-                                    class="lang-option"
-                                    data-lang="en">
-                                ENGLISH
-                            </button>
-                        </li>
-
-                        <li>
-                            <button type="button"
-                                    class="lang-option active"
-                                    data-lang="ro">
-                                ROMÂNĂ
-                            </button>
-                        </li>
-
-                    </ul>
-                </div>
-
-                <a href="/logout"
-                   class="logout-btn"
-                   data-i18n="logout">
-                    Deconectare
-                </a>
-
-            </div>
-        </header>
-
-        <!-- FORUM -->
-        <main class="forum-page">
-
-            <div class="forum-header">
-                <div>
-                    <div class="forum-eyebrow">
-                        <i data-lucide="graduation-cap"></i>
-                        STUDENT COMMUNITY
-                    </div>
-
-                    <h1>Student Forum</h1>
-
-                    <p>
-                        Share knowledge, ask questions
-                        and learn together.
-                    </p>
-                </div>
-
-                <button id="openPostModal"
-                        class="forum-primary-btn">
-                    <i data-lucide="plus"></i>
-                    Create Post
-                </button>
-            </div>
-
-            <div class="forum-layout">
-
-                <!-- MAIN FEED -->
-                <section class="forum-feed">
-
-                    <!-- POST COMPOSER -->
-                    <div class="quick-post-card">
-
-                        <div class="forum-avatar">
-                            {{ username[0]|upper }}
-                        </div>
-
-                        <button id="quickPostBtn"
-                                class="quick-post-placeholder">
-                            What's on your mind?
-                        </button>
-
-                        <button id="quickPostPlus"
-                                class="quick-post-plus"
-                                title="New post">
-                            <i data-lucide="plus"></i>
-                        </button>
-                    </div>
-
-                    <!-- SEARCH AND FILTERS -->
-                    <div class="forum-toolbar">
-
-                        <div class="forum-search">
-                            <i data-lucide="search"></i>
-                            <input id="forumSearch"
-                                   type="search"
-                                   placeholder="Search discussions...">
-                        </div>
-
-                        <select id="categoryFilter"
-                                aria-label="Filter by category">
-                            <option value="all">
-                                All subjects
-                            </option>
-                            <option value="General">General</option>
-                            <option value="Physics">Physics</option>
-                            <option value="Mathematics">Mathematics</option>
-                            <option value="Programming">Programming</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Other">Other</option>
-                        </select>
-
-                        <select id="sortFilter"
-                                aria-label="Sort posts">
-                            <option value="recent">Most recent</option>
-                            <option value="popular">Most popular</option>
-                        </select>
-                    </div>
-
-                    <div class="feed-section-heading">
-                        <h2>
-                            <i data-lucide="messages-square"></i>
-                            Community Feed
-                        </h2>
-
-                        <span id="postCount">0 posts</span>
-                    </div>
-
-                    <!-- POSTS RENDERED BY JS -->
-                    <div id="forumPosts"
-                         class="forum-posts"></div>
-
-                </section>
-
-                <!-- RIGHT SIDEBAR -->
-                <aside class="forum-right-sidebar">
-
-                    <div class="forum-info-card">
-                        <div class="info-card-icon">
-                            <i data-lucide="users-round"></i>
-                        </div>
-
-                        <h3>Welcome to UniBuddy!</h3>
-
-                        <p>
-                            A space for students to share
-                            ideas, solve problems and
-                            help each other succeed.
-                        </p>
-                    </div>
-
-                    <div class="forum-info-card">
-                        <h3>
-                            <i data-lucide="book-open"></i>
-                            Popular Subjects
-                        </h3>
-
-                        <button class="subject-shortcut"
-                                data-category="Programming">
-                            <i data-lucide="code-2"></i>
-                            Programming
-                            <i data-lucide="chevron-right"></i>
-                        </button>
-
-                        <button class="subject-shortcut"
-                                data-category="Physics">
-                            <i data-lucide="atom"></i>
-                            Physics
-                            <i data-lucide="chevron-right"></i>
-                        </button>
-
-                        <button class="subject-shortcut"
-                                data-category="Mathematics">
-                            <i data-lucide="sigma"></i>
-                            Mathematics
-                            <i data-lucide="chevron-right"></i>
-                        </button>
-
-                        <button class="subject-shortcut"
-                                data-category="Electronics">
-                            <i data-lucide="cpu"></i>
-                            Electronics
-                            <i data-lucide="chevron-right"></i>
-                        </button>
-
-                    </div>
-
-                    <div class="forum-info-card forum-tip">
-                        <i data-lucide="sparkles"></i>
-                        <h3>Need extra help?</h3>
-
-                        <p>
-                            Ask UniBuddy AI to explain
-                            difficult topics or summarize
-                            your course notes.
-                        </p>
-
-                        <a href="/ai" class="ai-forum-link">
-                            Open UniBuddy AI
-                            <i data-lucide="arrow-right"></i>
-                        </a>
-                    </div>
-
-                </aside>
-
-            </div>
-        </main>
-
-    </div>
-
-</div>
-
-<!-- CREATE POST MODAL -->
-<div id="postModal" class="forum-modal hidden">
-
-    <div class="forum-modal-box">
-
-        <div class="forum-modal-heading">
-            <h2>Create a Post</h2>
-
-            <button id="closePostModal"
-                    class="modal-close"
-                    title="Close">
-                <i data-lucide="x"></i>
+{% extends "base.html" %}
+{% block title %}Acasă{% endblock %}
+{% block page_title %}<span data-i18n="feed.title">Acasă</span>{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('feed.css') }}">{% endblock %}
+
+{% block content %}
+<div class="feed-layout">
+    <section class="feed-main">
+
+        <div class="card composer">
+            <span class="avatar" id="composerAvatar">{{ user.initials }}</span>
+            <button type="button" class="composer-input" id="openComposer" data-i18n="feed.composerPrompt">Ce vrei să împărtășești cu colegii?</button>
+            <button type="button" class="btn btn-primary" id="openComposerBtn">
+                <i data-lucide="plus"></i><span data-i18n="feed.newPost">Postare nouă</span>
             </button>
         </div>
 
-        <form id="createPostForm">
-
-            <label for="postTitle">Title</label>
-
-            <input id="postTitle"
-                   type="text"
-                   maxlength="120"
-                   placeholder="What would you like to discuss?"
-                   required>
-
-            <label for="postCategory">Subject</label>
-
-            <select id="postCategory" required>
-                <option value="General">General</option>
-                <option value="Physics">Physics</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Programming">Programming</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Other">Other</option>
-            </select>
-
-            <label for="postContent">Description</label>
-
-            <textarea id="postContent"
-                      rows="6"
-                      maxlength="5000"
-                      placeholder="Share your thoughts, questions or useful information..."
-                      required></textarea>
-
-            <div class="forum-modal-actions">
-                <button type="button"
-                        id="cancelPost"
-                        class="forum-secondary-btn">
-                    Cancel
-                </button>
-
-                <button type="submit"
-                        class="forum-primary-btn">
-                    <i data-lucide="send"></i>
-                    Publish Post
-                </button>
+        <div class="feed-toolbar">
+            <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="search" class="input" id="feedSearch" data-i18n-placeholder="feed.search" placeholder="Caută în postări..." maxlength="100">
             </div>
+            <div class="segmented" role="group">
+                <button type="button" data-sort="recent" class="active" data-i18n="feed.recent">Recente</button>
+                <button type="button" data-sort="popular" data-i18n="feed.popular">Populare</button>
+            </div>
+        </div>
 
-        </form>
+        <div class="active-filter hidden" id="activeFilter"></div>
 
-    </div>
+        <div id="feed" aria-live="polite"></div>
+        <div id="feedSentinel" class="feed-sentinel"></div>
+    </section>
+
+    <aside class="feed-side">
+        <div class="card card-pad">
+            <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+                <h2 data-i18n="cal.widgetTitle" style="margin: 0;">Programul tău</h2>
+                <a href="/calendar#new" class="icon-btn sm" data-i18n-title="cal.add" title="Eveniment"><i data-lucide="plus"></i></a>
+            </div>
+            <div id="upcomingList" class="upcoming"></div>
+            <a href="/calendar" class="btn btn-secondary btn-block" data-i18n="cal.open">Deschide calendarul</a>
+        </div>
+
+        <div class="card card-pad">
+            <h2 data-i18n="feed.subjects">Materii populare</h2>
+            <div class="subject-list" id="subjectList"></div>
+        </div>
+
+        <div class="card card-pad side-promo">
+            <img src="/static/img/logo-64.png" alt="">
+            <h2 data-i18n="feed.buddyTitle">Ai nevoie de ajutor la studiu?</h2>
+            <p class="muted" data-i18n="feed.buddyText">Buddy îți explică, face rezumate și teste din fișierele tale.</p>
+            <a href="/ai" class="btn btn-outline btn-block" data-i18n="feed.buddyOpen">Deschide Buddy</a>
+        </div>
+
+        <div class="card card-pad">
+            <h2 data-i18n="feed.findTitle">Găsește colegi</h2>
+            <p class="muted" data-i18n="feed.findText">Adaugă prieteni ca să le vezi postările primii.</p>
+            <a href="/friends#find" class="btn btn-secondary btn-block" data-i18n="feed.findOpen">Caută studenți</a>
+        </div>
+    </aside>
 </div>
+{% endblock %}
 
-<!-- TOAST -->
-<div id="forumToast" class="forum-toast hidden"></div>
-
-<!-- BUDDY BUTTON -->
-<button type="button"
-        id="buddyBtn"
-        class="ai-toggle buddy-floating">
-    ✦ BUDDY
-</button>
-
-<script>
-    window.FORUM_USER = {
-        username: {{ username | tojson }},
-        fullName: {{ user.full_name | tojson }}
-    };
-</script>
-
-<script src="{{ url_for('static', filename='profile.js') }}"></script>
-<script src="{{ url_for('static', filename='forum.js') }}"></script>
-<script src="{{ url_for('static', filename='buddy-navigation.js') }}"></script>
-<script src="{{ url_for('static', filename='remove-search.js') }}"></script>
-
-</body>
-</html>
+{% block scripts %}<script src="{{ asset('feed.js') }}"></script>{% endblock %}
